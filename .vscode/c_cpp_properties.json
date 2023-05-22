@@ -1,0 +1,30 @@
+{
+    "configurations": [
+        {
+            "name": "vscode_stm32_c_cpp_properties",
+            "compilerPath": "/usr/bin/arm-none-eabi-gcc",
+            "includePath": [
+                "${workspaceFolder}/src/",
+                "~/Projects/NRF52/SDK/components/**",
+                "~/Projects/NRF52/SDK/modules/**",
+                "~/Projects/NRF52/SDK/integration/**",
+                "~/Projects/NRF52/SDK/external/**",
+                "${workspaceFolder}/config"
+            ],
+            "defines": [
+                "BOARD_PCA10040",
+                "BSP_DEFINES_ONLY",
+                "CONFIG_GPIO_AS_PINRESET",
+                "ESB_PRESENT",
+                "FLOAT_ABI_HARD",
+                "NRF52",
+                "NRF52832_XXAA",
+                "NRF52_PAN_74"
+            ],
+            "cStandard": "c11",
+            "cppStandard": "c++17",
+            "intelliSenseMode": "linux-gcc-arm"
+        }
+    ],
+    "version": 4
+}
