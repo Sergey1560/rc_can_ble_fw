@@ -12,7 +12,8 @@ SRC_FILES += \
 $(PROJ_DIR)/src/main.c \
 $(PROJ_DIR)/src/ble_common.c \
 $(PROJ_DIR)/src/ble_service.c \
-$(PROJ_DIR)/src/upd_timers.c
+$(PROJ_DIR)/src/upd_timers.c \
+$(PROJ_DIR)/src/leds.c
 
 
 # Source files common to all targets

@@ -39,6 +39,7 @@ uint32_t update_can_data(uint8_t *data, uint32_t len){
     ret_code_t err_code;
 
     NRF_LOG_INFO("Send data");
+    rc_led_candata_invert();
     err_code = ble_candata_update(&rcdiy_service, data, len);
     APP_ERROR_CHECK(err_code);
 
@@ -121,7 +122,8 @@ static void ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
     {
         case BLE_GAP_EVT_DISCONNECTED:
             NRF_LOG_INFO("Disconnected.");
-            NRF_LOG_INFO("Disable notify");
+            rc_led_connection(0);
+            rc_led_candata(0);
             timer_control(0);
             
             // LED indication will be changed when advertising starts.
@@ -129,10 +131,11 @@ static void ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
 
         case BLE_GAP_EVT_CONNECTED:
             NRF_LOG_INFO("Connected.");
-            err_code = bsp_indication_set(BSP_INDICATE_CONNECTED);
-            APP_ERROR_CHECK(err_code);
+            rc_led_connection(1);
+            
             m_conn_handle = p_ble_evt->evt.gap_evt.conn_handle;
             err_code = nrf_ble_qwr_conn_handle_assign(&m_qwr, m_conn_handle);
+
             APP_ERROR_CHECK(err_code);
             break;
 

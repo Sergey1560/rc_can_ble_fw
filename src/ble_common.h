@@ -34,6 +34,7 @@
 
 #include "ble_service.h"
 #include "upd_timers.h"
+#include "leds.h"
 
 #define DEVICE_NAME                     "CAN_BLE"                               /**< Name of device. Will be included in the advertising data. */
 #define MANUFACTURER_NAME               "RogaAndKopyta"                         /**< Manufacturer. Will be passed to Device Information Service. */
