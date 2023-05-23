@@ -7578,7 +7578,7 @@
  
 
 #ifndef NRF_FPRINTF_FLAG_AUTOMATIC_CR_ON_LF_ENABLED
-#define NRF_FPRINTF_FLAG_AUTOMATIC_CR_ON_LF_ENABLED 1
+#define NRF_FPRINTF_FLAG_AUTOMATIC_CR_ON_LF_ENABLED 0
 #endif
 
 // <q> NRF_FPRINTF_DOUBLE_ENABLED  - Enable IEEE-754 double precision formatting.
@@ -7759,7 +7759,7 @@
 // <i> Log data is buffered and can be processed in idle.
 
 #ifndef NRF_LOG_DEFERRED
-#define NRF_LOG_DEFERRED 1
+#define NRF_LOG_DEFERRED 0
 #endif
 
 // <q> NRF_LOG_FILTERS_ENABLED  - Enable dynamic filtering of logs.
@@ -11829,7 +11829,7 @@
 // <2=> NRF_SDH_DISPATCH_MODEL_POLLING 
 
 #ifndef NRF_SDH_DISPATCH_MODEL
-#define NRF_SDH_DISPATCH_MODEL 0
+#define NRF_SDH_DISPATCH_MODEL 2
 #endif
 
 // </h> 

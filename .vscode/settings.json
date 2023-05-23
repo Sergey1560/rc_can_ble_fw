@@ -1,0 +1,6 @@
+{
+    "files.associations": {
+        "ble_common.h": "c",
+        "timers.h": "c"
+    }
+}

@@ -7,6 +7,7 @@
 #include "ble.h"
 #include "ble_srv_common.h"
 
+#include "ble_common.h"
 
 //f364adc9-b000-4042-ba50-05ca45bf8abc
 //00001ff8-0000-1000-8000-00805f9b34fb
@@ -92,6 +93,7 @@ NRF_SDH_BLE_OBSERVER(_name ## _obs,                                             
  */
 uint32_t ble_cus_init(ble_cus_t * p_cus, const ble_cus_init_t * p_cus_init);
 void ble_cus_on_ble_evt( ble_evt_t const * p_ble_evt, void * p_context);
-uint32_t ble_candata_update(ble_cus_t * p_cus, uint8_t *custom_value);
+uint32_t ble_candata_update(ble_cus_t * p_cus, uint8_t *data, uint32_t len);
+void notification_timeout_handler(void * p_context);
 
 #endif
