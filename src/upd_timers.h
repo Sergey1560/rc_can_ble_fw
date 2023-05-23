@@ -1,5 +1,5 @@
-#ifndef TIMERS_H
-#define TIMERS_H
+#ifndef UPD_TIMERS_H
+#define UPD_TIMERS_H
 
 #include "nrf_log.h"
 #include "nrf_log_ctrl.h"

@@ -6,6 +6,7 @@
 #include "boards.h"
 #include "nrf_log.h"
 
+
 volatile uint8_t __attribute__ ((aligned (4))) can_main_data[CAN_MAIN_UUID_LEN];
 volatile uint8_t __attribute__ ((aligned (4))) can_filter_data[CAN_FILTER_UUID_LEN];
 
@@ -15,10 +16,10 @@ volatile uint8_t __attribute__ ((aligned (4))) can_data[CAN_MAIN_UUID_LEN] = {0}
 /*
 Can send data fucntion
 */
-void notification_timeout_handler(void * p_context)
+void notification_timeout_handler(TimerHandle_t xTimer)
 {
+    UNUSED_PARAMETER(xTimer);
     static uint8_t count = 0;
-    UNUSED_PARAMETER(p_context);
     uint32_t pid = 0x281;
     
     // Increment the value of m_custom_value before nortifing it.
@@ -30,6 +31,7 @@ void notification_timeout_handler(void * p_context)
     can_data[4] = count++;
 
     update_can_data((uint8_t *)can_data,CAN_MAIN_UUID_LEN);
+//    NRF_LOG_INFO("Call update");
 }
 
 
