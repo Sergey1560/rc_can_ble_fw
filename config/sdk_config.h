@@ -7777,7 +7777,7 @@
 // <i> but system will spend significant amount of time in critical section
 
 #ifndef NRF_LOG_NON_DEFFERED_CRITICAL_REGION_ENABLED
-#define NRF_LOG_NON_DEFFERED_CRITICAL_REGION_ENABLED 0
+#define NRF_LOG_NON_DEFFERED_CRITICAL_REGION_ENABLED 1
 #endif
 
 // <o> NRF_LOG_STR_PUSH_BUFFER_SIZE  - Size of the buffer dedicated for strings stored using @ref NRF_LOG_PUSH.
@@ -11317,14 +11317,6 @@
 
 #ifndef SEGGER_RTT_CONFIG_DEFAULT_MODE
 #define SEGGER_RTT_CONFIG_DEFAULT_MODE 0
-#endif
-
-#ifndef   SEGGER_RTT_ALIGNMENT
-  #define SEGGER_RTT_ALIGNMENT                            1
-#endif
-
-#ifndef   SEGGER_RTT_BUFFER_ALIGNMENT
-  #define SEGGER_RTT_BUFFER_ALIGNMENT                     1
 #endif
 
 

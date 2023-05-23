@@ -43,7 +43,7 @@ void vOneSecTimer( TimerHandle_t xTimer ){
 	ulCount++;
 
     vTimerSetTimerID( xTimer, ( void * ) ulCount );
-    //NRF_LOG_INFO("Timer");
+    NRF_LOG_INFO("Timer %d",ulCount);
 
 }
 
@@ -58,6 +58,8 @@ int main(void)
     APP_ERROR_CHECK(err_code);
 
     NRF_LOG_DEFAULT_BACKENDS_INIT();
+
+    NRF_LOG_INFO("Start");
 
     err_code = nrf_drv_clock_init();
     APP_ERROR_CHECK(err_code);
