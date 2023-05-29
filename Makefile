@@ -13,6 +13,8 @@ $(PROJ_DIR)/src/main.c \
 $(PROJ_DIR)/src/ble_common.c \
 $(PROJ_DIR)/src/ble_service.c \
 $(PROJ_DIR)/src/upd_timers.c \
+$(PROJ_DIR)/src/mcp2515_hal.c \
+$(PROJ_DIR)src/mcp2515.c \
 $(PROJ_DIR)/src/leds.c
 
 
@@ -102,7 +104,10 @@ SRC_FILES += \
   $(SDK_ROOT)/components/softdevice/common/nrf_sdh.c \
   $(SDK_ROOT)/components/softdevice/common/nrf_sdh_ble.c \
   $(SDK_ROOT)/components/softdevice/common/nrf_sdh_freertos.c \
-  $(SDK_ROOT)/components/softdevice/common/nrf_sdh_soc.c
+  $(SDK_ROOT)/components/softdevice/common/nrf_sdh_soc.c \
+  $(SDK_ROOT)/modules/nrfx/drivers/src/nrfx_spi.c \
+  $(SDK_ROOT)/integration/nrfx/legacy/nrf_drv_spi.c \
+  $(SDK_ROOT)/modules/nrfx/drivers/src/nrfx_spim.c 
 
 # Include folders common to all targets
 INC_FOLDERS += \
