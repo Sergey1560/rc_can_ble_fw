@@ -6,8 +6,9 @@
 #include <string.h>
 #include "mcp2515_hal.h"
 
-#define SPI_TRANS_LEN                   32
+#define CAN_MSG_BUFFER_SIZE             10
 
+#define SPI_TRANS_LEN                   32
 #define CAN_STDID_MASK                  0x7FF //11bit
 
 /*
@@ -166,5 +167,7 @@ void mcp2515_send_msg(struct can_message_t *can_msg);
 void mcp2515_get_msg(uint8_t num, struct can_message_t *can_msg);
 void mcp2515_dump_status(void);
 
+int mcp2515_push_msg(struct can_message_t *can_msg);
+int mcp2515_pull_msg(struct can_message_t *can_msg);
 
 #endif

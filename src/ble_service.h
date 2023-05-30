@@ -98,6 +98,8 @@ NRF_SDH_BLE_OBSERVER(_name ## _obs,                                             
 uint32_t ble_cus_init(ble_cus_t * p_cus, const ble_cus_init_t * p_cus_init);
 void ble_cus_on_ble_evt( ble_evt_t const * p_ble_evt, void * p_context);
 uint32_t ble_candata_update(ble_cus_t * p_cus, uint8_t *data, uint32_t len);
-void notification_timeout_handler(TimerHandle_t xTimer);
+//void notification_timeout_handler(TimerHandle_t xTimer);
+void ble_notify_task(void *p);
+void notify_set(uint32_t flag);
 
 #endif

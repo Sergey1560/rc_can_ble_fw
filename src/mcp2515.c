@@ -11,6 +11,10 @@ static uint8_t mcp2515_read_rx_status(void);
 volatile uint8_t __attribute__ ((aligned (4))) tx_buffer[SPI_TRANS_LEN];
 volatile uint8_t __attribute__ ((aligned (4))) rx_buffer[SPI_TRANS_LEN];
 
+
+volatile struct can_message_t can_msg_buffer[CAN_MSG_BUFFER_SIZE];
+volatile uint32_t can_msg_buffer_index;
+
 const struct rx_buff_addr_t rx0_buff = {
     .RXBSIDH = MCP2515_REG_RXB0SIDH,
     .RXBSIDL = MCP2515_REG_RXB0SIDL,
@@ -32,6 +36,12 @@ int mcp2515_init(void){
     mcp2515_reset();
     
     delay_ms(100); //128 OSC CLK minimum
+
+    //clear msg buffer
+    can_msg_buffer_index = 0;
+    for(uint32_t i=0; i<CAN_MSG_BUFFER_SIZE*sizeof(struct can_message_t);i++){
+        *((uint8_t *)can_msg_buffer) = 0;
+    }
 
     mcp2515_dump_status();
 
@@ -214,3 +224,28 @@ static uint8_t mcp2515_read_rx_status(void){
     spi_transfer((uint8_t *)tx_buffer, (uint8_t *)rx_buffer, 2);
     return rx_buffer[1];
 };
+
+
+int mcp2515_push_msg(struct can_message_t *can_msg){
+
+    if(can_msg_buffer_index >= CAN_MSG_BUFFER_SIZE){
+        return -1;
+    }
+
+    can_msg_buffer[can_msg_buffer_index] = *can_msg;
+    can_msg_buffer_index++;
+
+    return can_msg_buffer_index;
+}
+
+int mcp2515_pull_msg(struct can_message_t *can_msg){
+
+    if(can_msg_buffer_index <= 0){
+        return -1;
+    }
+
+    *can_msg = can_msg_buffer[can_msg_buffer_index-1];
+    can_msg_buffer_index--;
+
+    return can_msg_buffer_index;
+}

@@ -5,13 +5,61 @@
 #include "nrf_gpio.h"
 #include "boards.h"
 #include "nrf_log.h"
+#include "mcp2515.h"
 
 
 volatile uint8_t __attribute__ ((aligned (4))) can_main_data[CAN_MAIN_UUID_LEN];
 volatile uint8_t __attribute__ ((aligned (4))) can_filter_data[CAN_FILTER_UUID_LEN];
-
 volatile uint8_t __attribute__ ((aligned (4))) can_data[CAN_MAIN_UUID_LEN] = {0};
 
+volatile uint32_t notification_enabled = 0;
+
+void notify_set(uint32_t flag){
+
+    if(flag > 0){
+        notification_enabled = 1;
+    }else{
+        notification_enabled = 0;
+    }
+}
+
+void ble_notify_task(void *p){
+    //ret_code_t err_code;
+    uint32_t ulNotifiedValue;
+    struct can_message_t can_msg;
+
+    while(1){
+
+        if(notification_enabled != 1){
+            vTaskSuspend(NULL);
+        }
+
+        xTaskNotifyWait(pdFALSE,     /* Не очищать биты на входе. */
+                        0xffffffff,        /* На выходе очищаются все биты. */
+                        &ulNotifiedValue, /* Здесь хранится значение оповещения. */
+                        portMAX_DELAY);  /* Время таймаута на блокировке. */
+
+        NRF_LOG_INFO("Notify get");
+
+        if(mcp2515_pull_msg(&can_msg) >= 0){
+            can_data[0] = can_msg.id & 0xFF;
+            can_data[1] = (can_msg.id >> 8) & 0xFF;
+            can_data[2] = (can_msg.id >> 16) & 0xFF;
+            can_data[3] = (can_msg.id >> 24) & 0xFF;
+            
+            for(uint32_t i=0; i<can_msg.len; i++){
+                can_data[4+i] = can_msg.data[i];
+            }
+
+            if(notification_enabled == 1){
+                update_can_data((uint8_t *)can_data, CAN_MAIN_UUID_LEN);
+            }
+        }else{
+            NRF_LOG_INFO("Notify without data");
+        }
+
+    }
+}
 
 /*
 Can send data fucntion
@@ -297,38 +345,38 @@ void ble_cus_on_ble_evt( ble_evt_t const * p_ble_evt, void * p_context)
     switch (p_ble_evt->header.evt_id)
     {
         case BLE_GAP_EVT_CONNECTED:
-            NRF_LOG_INFO("BLE_GAP_EVT_CONNECTED");
+            //NRF_LOG_INFO("BLE_GAP_EVT_CONNECTED");
             on_connect(p_cus, p_ble_evt);
             break;
 
         case BLE_GAP_EVT_DISCONNECTED:
-            NRF_LOG_INFO("BLE_GAP_EVT_DISCONNECTED");
+            //NRF_LOG_INFO("BLE_GAP_EVT_DISCONNECTED");
             on_disconnect(p_cus, p_ble_evt);
             break;
 
         case BLE_GAP_EVT_CONN_PARAM_UPDATE:
-            NRF_LOG_INFO("BLE_GAP_EVT_CONN_PARAM_UPDATE");
+            //NRF_LOG_INFO("BLE_GAP_EVT_CONN_PARAM_UPDATE");
             on_par_update(p_cus, p_ble_evt);
             break;
 
         case BLE_GATTS_EVT_WRITE:
-             NRF_LOG_INFO("BLE_GATTS_EVT_WRITE");
+             //NRF_LOG_INFO("BLE_GATTS_EVT_WRITE");
              on_write(p_cus, p_ble_evt);
              break;
 
         case BLE_GAP_EVT_DATA_LENGTH_UPDATE_REQUEST:
-             NRF_LOG_INFO("BLE_GAP_EVT_DATA_LENGTH_UPDATE_REQUEST");
+             //NRF_LOG_INFO("BLE_GAP_EVT_DATA_LENGTH_UPDATE_REQUEST");
              on_data_len_upd_req(p_cus, p_ble_evt);
              break;
 
 
         case BLE_GAP_EVT_DATA_LENGTH_UPDATE:
-             NRF_LOG_INFO("BLE_GAP_EVT_DATA_LENGTH_UPDATE");
+             //NRF_LOG_INFO("BLE_GAP_EVT_DATA_LENGTH_UPDATE");
              on_data_len_upd(p_cus, p_ble_evt);
              break;
 
         case BLE_GATTS_EVT_HVN_TX_COMPLETE:
-             NRF_LOG_INFO("BLE_GATTS_EVT_HVN_TX_COMPLETE");
+             //NRF_LOG_INFO("BLE_GATTS_EVT_HVN_TX_COMPLETE");
              break;
 
 
@@ -341,7 +389,7 @@ void ble_cus_on_ble_evt( ble_evt_t const * p_ble_evt, void * p_context)
 
 uint32_t ble_candata_update(ble_cus_t * p_cus, uint8_t *data, uint32_t len)
 {
-    NRF_LOG_INFO("In ble_candata_update."); 
+    NRF_LOG_INFO("ble_candata_update"); 
     if (p_cus == NULL)
     {
         return NRF_ERROR_NULL;
@@ -378,7 +426,7 @@ uint32_t ble_candata_update(ble_cus_t * p_cus, uint8_t *data, uint32_t len)
         hvx_params.p_data = gatts_value.p_value;
 
         err_code = sd_ble_gatts_hvx(p_cus->conn_handle, &hvx_params);
-        NRF_LOG_INFO("sd_ble_gatts_hvx result: %x. \r\n", err_code); 
+        //NRF_LOG_INFO("sd_ble_gatts_hvx result: %x. \r\n", err_code); 
     }
     else
     {

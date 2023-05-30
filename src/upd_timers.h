@@ -8,7 +8,7 @@
 
 #include "ble_service.h"
 
-void timers_init(void);
-void timer_control(uint8_t state);
+// void timers_init(void);
+// void timer_control(uint8_t state);
 
 #endif

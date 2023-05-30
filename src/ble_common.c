@@ -7,6 +7,8 @@ NRF_BLE_QWR_DEF(m_qwr);                                                         
 BLE_ADVERTISING_DEF(m_advertising);                                             /**< Advertising module instance. */
 BLE_CUS_DEF(rcdiy_service);
 
+TaskHandle_t xNotifyTask;
+
 static uint16_t m_conn_handle = BLE_CONN_HANDLE_INVALID;                        /**< Handle of the current connection. */
 
 /* YOUR_JOB: Declare all services structure your application is using
@@ -38,7 +40,7 @@ static void pm_evt_handler(pm_evt_t const * p_evt);
 uint32_t update_can_data(uint8_t *data, uint32_t len){
     ret_code_t err_code;
 
-    NRF_LOG_INFO("Send data");
+    //NRF_LOG_INFO("Send data");
     rc_led_candata_invert();
     err_code = ble_candata_update(&rcdiy_service, data, len);
     APP_ERROR_CHECK(err_code);
@@ -121,11 +123,10 @@ static void ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
     switch (p_ble_evt->header.evt_id)
     {
         case BLE_GAP_EVT_DISCONNECTED:
+            notify_set(0);
             NRF_LOG_INFO("Disconnected.");
             rc_led_connection(0);
             rc_led_candata(0);
-            timer_control(0);
-            
             // LED indication will be changed when advertising starts.
             break;
 
@@ -189,12 +190,15 @@ static void on_cus_evt(ble_cus_t  *p_cus_service, ble_cus_evt_t * p_evt)
 
         case BLE_CUS_EVT_NOTIFICATION_ENABLED:
             NRF_LOG_INFO("Enable notify");
-            timer_control(1);
+            notify_set(1);
+            if(xNotifyTask != NULL){
+                vTaskResume(xNotifyTask);
+            }
             break;
 
         case BLE_CUS_EVT_NOTIFICATION_DISABLED:
             NRF_LOG_INFO("Disable notify");
-            timer_control(0);
+            notify_set(0);
             break;
 
         case BLE_CUS_EVT_CONNECTED:
@@ -473,7 +477,6 @@ static void pm_evt_handler(pm_evt_t const * p_evt)
 }
 
 
-
 ret_code_t bluetooth_start(bool erase_bonds)
 {
 
@@ -485,12 +488,10 @@ ret_code_t bluetooth_start(bool erase_bonds)
     conn_params_init();
     peer_manager_init();
 
-    // Start execution.
-    NRF_LOG_INFO("Template example started.");
-    //application_timers_start();
+    xTaskCreate(ble_notify_task, "NTF", 1024, NULL, 2, (TaskHandle_t *)&xNotifyTask);
 
+    NRF_LOG_INFO("Bluetooth started.");
+       
     nrf_sdh_freertos_init(advertising_start, &erase_bonds);
-    //advertising_start(erase_bonds);
-
     return NRF_SUCCESS;
 }

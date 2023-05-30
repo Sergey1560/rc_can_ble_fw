@@ -56,6 +56,7 @@ static void int_pin_handler(nrf_drv_gpiote_pin_t pin, nrf_gpiote_polarity_t acti
 {
     BaseType_t xHigherPriorityTaskWoken = pdFALSE;
     vTaskNotifyGiveFromISR(xCanTask, &xHigherPriorityTaskWoken);
+    //NRF_LOG_INFO("CAN IRQ");
     portYIELD_FROM_ISR( xHigherPriorityTaskWoken );
 }
 
@@ -79,23 +80,31 @@ void can_task(void *p){
     mcp2515_init();
 
     while(1){
-        if(ulTaskNotifyTake(pdTRUE,pdMS_TO_TICKS(2000)) != 0){
-			data = mcp2515_read_status();
+        ulTaskNotifyTake(pdTRUE,pdMS_TO_TICKS(100));
+        data = mcp2515_read_status();
 
-			if((data & 1)){
-				mcp2515_get_msg(0, &can_msg);
-				NRF_LOG_INFO("RX0 ID: 0x%0X", can_msg.id);
-			}
+        if(data & 3){
+            if((data & 1)){
+                mcp2515_get_msg(0, &can_msg);
+                mcp2515_push_msg(&can_msg);
+                NRF_LOG_INFO("RX0 ID: 0x%0X", can_msg.id);
+            }
 
-			if((data & (1<<1))){
-				mcp2515_get_msg(1, &can_msg);
-				NRF_LOG_INFO("RX1 ID: 0x%0X", can_msg.id);
-			}
+            if((data & (1<<1))){
+                mcp2515_get_msg(1, &can_msg);
+                mcp2515_push_msg(&can_msg);
+                NRF_LOG_INFO("RX1 ID: 0x%0X", can_msg.id);
+            }
+
+            //NRF_LOG_INFO("Send notify");
+            if(xNotifyTask != NULL){
+                xTaskNotifyGive(xNotifyTask);
+            };
 
         }else{
-            data = mcp2515_read_status();
-            NRF_LOG_INFO("DATA: %0d", data);
+            //NRF_LOG_INFO("Data not present");
         }
+
     }
 }
 
@@ -122,7 +131,7 @@ int main(void)
         for(uint32_t k=0; k<0x100000; k++){__NOP();};
     }
 
-    timers_init();
+    //timers_init();
     power_management_init();
     bluetooth_start(0);
     xOneSec_Timer = xTimerCreate( "1STimer",pdMS_TO_TICKS(1000),pdTRUE,( void * ) 0, vOneSecTimer);
