@@ -13,11 +13,11 @@
 #include "nrf_log_default_backends.h"
 
 #define SPI_INSTANCE    0 /**< SPI instance index. */
-#define SPI_SCK_PIN     22
-#define SPI_MOSI_PIN    23
-#define SPI_MISO_PIN    24
-#define SPI_SS_PIN      25
-#define MCP_INT_PIN     26
+#define SPI_SCK_PIN     5
+#define SPI_MOSI_PIN    6
+#define SPI_MISO_PIN    7
+#define SPI_SS_PIN      8
+#define MCP_INT_PIN     20
 
 #define DEBUG(...)        NRF_LOG_INFO(__VA_ARGS__)
 

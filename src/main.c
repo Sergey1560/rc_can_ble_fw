@@ -55,9 +55,7 @@ void vOneSecTimer( TimerHandle_t xTimer ){
 static void int_pin_handler(nrf_drv_gpiote_pin_t pin, nrf_gpiote_polarity_t action)
 {
     BaseType_t xHigherPriorityTaskWoken = pdFALSE;
-    
     vTaskNotifyGiveFromISR(xCanTask, &xHigherPriorityTaskWoken);
-    
     portYIELD_FROM_ISR( xHigherPriorityTaskWoken );
 }
 
@@ -82,8 +80,6 @@ void can_task(void *p){
 
     while(1){
         if(ulTaskNotifyTake(pdTRUE,pdMS_TO_TICKS(2000)) != 0){
-            NRF_LOG_INFO("Can notify");
-
 			data = mcp2515_read_status();
 
 			if((data & 1)){
@@ -99,7 +95,6 @@ void can_task(void *p){
         }else{
             data = mcp2515_read_status();
             NRF_LOG_INFO("DATA: %0d", data);
-            //NRF_LOG_INFO("Can task timeout");
         }
     }
 }
@@ -129,9 +124,9 @@ int main(void)
 
     timers_init();
     power_management_init();
-    //bluetooth_start(0);
-    //xOneSec_Timer = xTimerCreate( "1STimer",pdMS_TO_TICKS(1000),pdTRUE,( void * ) 0, vOneSecTimer);
-    //xTimerStart(xOneSec_Timer,0);
+    bluetooth_start(0);
+    xOneSec_Timer = xTimerCreate( "1STimer",pdMS_TO_TICKS(1000),pdTRUE,( void * ) 0, vOneSecTimer);
+    xTimerStart(xOneSec_Timer,0);
 
     xTaskCreate(blink_task, "Blink", 256, NULL, 2, NULL);
     xTaskCreate(can_task, "Can", 1024, NULL, 2, (TaskHandle_t *)&xCanTask);
