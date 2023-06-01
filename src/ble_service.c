@@ -29,7 +29,6 @@ uint32_t notify_get(void){
 
 
 void ble_notify_task(void *p){
-    struct can_message_t can_msg;
 
     while(1){
 
@@ -38,16 +37,7 @@ void ble_notify_task(void *p){
             vTaskSuspend(NULL);
         }
 
-        adlm_pack_data(&can_msg);
-        can_data[0] = can_msg.id & 0xFF;
-        can_data[1] = (can_msg.id >> 8) & 0xFF;
-        can_data[2] = (can_msg.id >> 16) & 0xFF;
-        can_data[3] = (can_msg.id >> 24) & 0xFF;
-        
-        for(uint32_t i=0; i<can_msg.len; i++){
-            can_data[4+i] = can_msg.data[i];
-        }
-
+        adlm_pack_data((uint8_t *)can_data);
         update_can_data((uint8_t *)can_data, CAN_MAIN_UUID_LEN);
 
         vTaskDelay(100);

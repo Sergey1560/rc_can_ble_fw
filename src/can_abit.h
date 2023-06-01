@@ -40,6 +40,6 @@ struct can_data_struct
 
 
 void adlm_parse_msg(struct can_message_t *msg);
-void adlm_pack_data(struct can_message_t *msg);
+void adlm_pack_data(uint8_t *data);
 
 #endif
