@@ -132,37 +132,55 @@ void mcp2515_send_msg(struct can_message_t *can_msg){
 
 
 void mcp2515_get_msg(uint8_t num, struct can_message_t *can_msg){
-    struct rx_buff_addr_t *rx_buff;
-    uint8_t data;
+    //struct rx_buff_addr_t *rx_buff;
+    //uint8_t data;
+    uint8_t out_buf[16];
+    uint8_t in_buf[16];
     
     if(num > 1){
         NRF_LOG_INFO("RX Buff index error: %d > 1",num);
     }
 
     if(num == 1){
-        rx_buff = (struct rx_buff_addr_t *)&rx1_buff;
+        out_buf[0] = MCP2515_INSTR_READ_RX1;
+        //rx_buff = (struct rx_buff_addr_t *)&rx1_buff;
     }else{
-        rx_buff = (struct rx_buff_addr_t *)&rx0_buff;
+        out_buf[0] = MCP2515_INSTR_READ_RX0;
+        //rx_buff = (struct rx_buff_addr_t *)&rx0_buff;
     }
 
-    data = mcp2515_read_reg(rx_buff->RXBSIDH);
-    can_msg->id = (data << 3);
-    data = mcp2515_read_reg(rx_buff->RXBSIDL);
-    
-    can_msg->id |= ((data >> 5) & 7);
+    spi_transfer((uint8_t *)out_buf, (uint8_t *)in_buf, 13);
+    can_msg->id = (in_buf[1] << 3);
+    can_msg->id |= ((in_buf[2] >> 5) & 7);
     can_msg->id &= 0x7FF;
-
-    can_msg->len = mcp2515_read_reg(rx_buff->RXBDLC);
+    can_msg->len = in_buf[5];
 
     if(can_msg->len > 8){
-        NRF_LOG_INFO("RX PKT LEN %d",can_msg->len);
+        NRF_LOG_ERROR("RX PKT LEN %d",can_msg->len);
     }
 
     for(uint32_t i=0; i<can_msg->len; i++){
-        can_msg->data[i] = mcp2515_read_reg(rx_buff->RXBnD+(uint8_t)i);
+        can_msg->data[i] = in_buf[6+i];
     }
 
-    mcp2515_modify_reg(MCP2515_REG_CANINTF,(1 << num),0);
+    //data = mcp2515_read_reg(rx_buff->RXBSIDH);
+    // can_msg->id = (data << 3);
+    // data = mcp2515_read_reg(rx_buff->RXBSIDL);
+    
+    // can_msg->id |= ((data >> 5) & 7);
+    // can_msg->id &= 0x7FF;
+
+    // can_msg->len = mcp2515_read_reg(rx_buff->RXBDLC);
+
+    // if(can_msg->len > 8){
+    //     NRF_LOG_INFO("RX PKT LEN %d",can_msg->len);
+    // }
+
+    // for(uint32_t i=0; i<can_msg->len; i++){
+    //     can_msg->data[i] = mcp2515_read_reg(rx_buff->RXBnD+(uint8_t)i);
+    // }
+
+    //mcp2515_modify_reg(MCP2515_REG_CANINTF,(1 << num),0);
 }
 
 

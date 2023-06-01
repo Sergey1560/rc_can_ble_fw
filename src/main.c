@@ -82,22 +82,18 @@ void can_task(void *p){
     while(1){
         ulTaskNotifyTake(pdTRUE,pdMS_TO_TICKS(100));
         data = mcp2515_read_status();
-
+        
         if(data & 3){
             if((data & 1)){
                 mcp2515_get_msg(0, &can_msg);
                 adlm_parse_msg(&can_msg);
-                // if(notify_get()){
-                //     mcp2515_push_msg(&can_msg);
-                // }
+                //NRF_LOG_INFO("GET RX0 0x%0X",can_msg.id);
             }
 
             if((data & (1<<1))){
                 mcp2515_get_msg(1, &can_msg);
                 adlm_parse_msg(&can_msg);
-                // if(notify_get()){
-                //     mcp2515_push_msg(&can_msg);
-                // }
+                //NRF_LOG_INFO("GET RX1 0x%0X",can_msg.id);
             }
 
         }
