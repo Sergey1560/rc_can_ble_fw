@@ -33,7 +33,6 @@
 #include "nrf_log_default_backends.h"
 
 #include "ble_service.h"
-#include "upd_timers.h"
 #include "leds.h"
 
 #define DEVICE_NAME                     "CAN_BLE"                               /**< Name of device. Will be included in the advertising data. */

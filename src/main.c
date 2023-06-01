@@ -7,10 +7,10 @@
 
 #include "ble_common.h"
 #include "ble_service.h"
-#include "upd_timers.h"
 #include "leds.h"
 
 #include "mcp2515.h"
+#include "can_abit.h"
 
 #include "FreeRTOS.h"
 #include "task.h"
@@ -86,25 +86,21 @@ void can_task(void *p){
         if(data & 3){
             if((data & 1)){
                 mcp2515_get_msg(0, &can_msg);
-                mcp2515_push_msg(&can_msg);
-                NRF_LOG_INFO("RX0 ID: 0x%0X", can_msg.id);
+                adlm_parse_msg(&can_msg);
+                // if(notify_get()){
+                //     mcp2515_push_msg(&can_msg);
+                // }
             }
 
             if((data & (1<<1))){
                 mcp2515_get_msg(1, &can_msg);
-                mcp2515_push_msg(&can_msg);
-                NRF_LOG_INFO("RX1 ID: 0x%0X", can_msg.id);
+                adlm_parse_msg(&can_msg);
+                // if(notify_get()){
+                //     mcp2515_push_msg(&can_msg);
+                // }
             }
 
-            //NRF_LOG_INFO("Send notify");
-            if(xNotifyTask != NULL){
-                xTaskNotifyGive(xNotifyTask);
-            };
-
-        }else{
-            //NRF_LOG_INFO("Data not present");
         }
-
     }
 }
 
@@ -131,7 +127,6 @@ int main(void)
         for(uint32_t k=0; k<0x100000; k++){__NOP();};
     }
 
-    //timers_init();
     power_management_init();
     bluetooth_start(0);
     xOneSec_Timer = xTimerCreate( "1STimer",pdMS_TO_TICKS(1000),pdTRUE,( void * ) 0, vOneSecTimer);

@@ -22,7 +22,7 @@
 #define RCDIY_SERVICE_UUID              0x1ff8
 
 #define CAN_MAIN_UUID                   0x0001
-#define CAN_MAIN_UUID_LEN               20 // 4 extID + 8 data
+#define CAN_MAIN_UUID_LEN               12 // 4 extID + 8 data
 #define CAN_MAIN_DATA_INTERVAL          100
 
 #define CAN_FILTER_UUID                 0x0002
@@ -101,5 +101,6 @@ uint32_t ble_candata_update(ble_cus_t * p_cus, uint8_t *data, uint32_t len);
 //void notification_timeout_handler(TimerHandle_t xTimer);
 void ble_notify_task(void *p);
 void notify_set(uint32_t flag);
+uint32_t notify_get(void);
 
 #endif

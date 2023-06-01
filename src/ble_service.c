@@ -6,7 +6,7 @@
 #include "boards.h"
 #include "nrf_log.h"
 #include "mcp2515.h"
-
+#include "can_abit.h"
 
 volatile uint8_t __attribute__ ((aligned (4))) can_main_data[CAN_MAIN_UUID_LEN];
 volatile uint8_t __attribute__ ((aligned (4))) can_filter_data[CAN_FILTER_UUID_LEN];
@@ -15,7 +15,7 @@ volatile uint8_t __attribute__ ((aligned (4))) can_data[CAN_MAIN_UUID_LEN] = {0}
 volatile uint32_t notification_enabled = 0;
 
 void notify_set(uint32_t flag){
-
+    NRF_LOG_INFO("Set notify %d",flag);
     if(flag > 0){
         notification_enabled = 1;
     }else{
@@ -23,65 +23,36 @@ void notify_set(uint32_t flag){
     }
 }
 
+uint32_t notify_get(void){
+    return notification_enabled;
+}
+
+
 void ble_notify_task(void *p){
-    //ret_code_t err_code;
-    uint32_t ulNotifiedValue;
     struct can_message_t can_msg;
 
     while(1){
 
-        if(notification_enabled != 1){
+        if(notification_enabled == 0){
+            NRF_LOG_INFO("Suspend Task");
             vTaskSuspend(NULL);
         }
 
-        xTaskNotifyWait(pdFALSE,     /* Не очищать биты на входе. */
-                        0xffffffff,        /* На выходе очищаются все биты. */
-                        &ulNotifiedValue, /* Здесь хранится значение оповещения. */
-                        portMAX_DELAY);  /* Время таймаута на блокировке. */
-
-        NRF_LOG_INFO("Notify get");
-
-        if(mcp2515_pull_msg(&can_msg) >= 0){
-            can_data[0] = can_msg.id & 0xFF;
-            can_data[1] = (can_msg.id >> 8) & 0xFF;
-            can_data[2] = (can_msg.id >> 16) & 0xFF;
-            can_data[3] = (can_msg.id >> 24) & 0xFF;
-            
-            for(uint32_t i=0; i<can_msg.len; i++){
-                can_data[4+i] = can_msg.data[i];
-            }
-
-            if(notification_enabled == 1){
-                update_can_data((uint8_t *)can_data, CAN_MAIN_UUID_LEN);
-            }
-        }else{
-            NRF_LOG_INFO("Notify without data");
+        adlm_pack_data(&can_msg);
+        can_data[0] = can_msg.id & 0xFF;
+        can_data[1] = (can_msg.id >> 8) & 0xFF;
+        can_data[2] = (can_msg.id >> 16) & 0xFF;
+        can_data[3] = (can_msg.id >> 24) & 0xFF;
+        
+        for(uint32_t i=0; i<can_msg.len; i++){
+            can_data[4+i] = can_msg.data[i];
         }
 
+        update_can_data((uint8_t *)can_data, CAN_MAIN_UUID_LEN);
+
+        vTaskDelay(100);
     }
 }
-
-/*
-Can send data fucntion
-*/
-void notification_timeout_handler(TimerHandle_t xTimer)
-{
-    UNUSED_PARAMETER(xTimer);
-    static uint8_t count = 0;
-    uint32_t pid = 0x281;
-    
-    // Increment the value of m_custom_value before nortifing it.
-    
-    can_data[0] = pid & 0xFF;
-    can_data[1] = (pid >> 8) & 0xFF;
-    can_data[2] = (pid >> 16) & 0xFF;
-    can_data[3] = (pid >> 24) & 0xFF;
-    can_data[4] = count++;
-
-    update_can_data((uint8_t *)can_data,CAN_MAIN_UUID_LEN);
-//    NRF_LOG_INFO("Call update");
-}
-
 
 /**@brief Function for handling the Connect event.
  *
@@ -389,7 +360,7 @@ void ble_cus_on_ble_evt( ble_evt_t const * p_ble_evt, void * p_context)
 
 uint32_t ble_candata_update(ble_cus_t * p_cus, uint8_t *data, uint32_t len)
 {
-    NRF_LOG_INFO("ble_candata_update"); 
+    //NRF_LOG_INFO("ble_candata_update"); 
     if (p_cus == NULL)
     {
         return NRF_ERROR_NULL;

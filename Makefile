@@ -12,9 +12,9 @@ SRC_FILES += \
 $(PROJ_DIR)/src/main.c \
 $(PROJ_DIR)/src/ble_common.c \
 $(PROJ_DIR)/src/ble_service.c \
-$(PROJ_DIR)/src/upd_timers.c \
 $(PROJ_DIR)/src/mcp2515_hal.c \
 $(PROJ_DIR)src/mcp2515.c \
+$(PROJ_DIR)src/can_abit.c \
 $(PROJ_DIR)/src/leds.c
 
 

@@ -229,6 +229,7 @@ static uint8_t mcp2515_read_rx_status(void){
 int mcp2515_push_msg(struct can_message_t *can_msg){
 
     if(can_msg_buffer_index >= CAN_MSG_BUFFER_SIZE){
+        NRF_LOG_ERROR("CAN ORV");
         return -1;
     }
 

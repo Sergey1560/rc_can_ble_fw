@@ -38,12 +38,16 @@ static void advertising_init(void);
 static void pm_evt_handler(pm_evt_t const * p_evt);
 
 uint32_t update_can_data(uint8_t *data, uint32_t len){
-    ret_code_t err_code;
+    ret_code_t err_code = NRF_SUCCESS;
 
-    //NRF_LOG_INFO("Send data");
     rc_led_candata_invert();
-    err_code = ble_candata_update(&rcdiy_service, data, len);
-    APP_ERROR_CHECK(err_code);
+    if(notify_get()){
+        err_code = ble_candata_update(&rcdiy_service, data, len);
+        //APP_ERROR_CHECK(err_code);
+        if(err_code != NRF_SUCCESS){
+            NRF_LOG_ERROR("Error %d",err_code);
+        }
+    }
 
     return err_code;
 };
