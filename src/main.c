@@ -87,15 +87,16 @@ void can_task(void *p){
             if((data & 1)){
                 mcp2515_get_msg(0, &can_msg);
                 adlm_parse_msg(&can_msg);
-                //NRF_LOG_INFO("GET RX0 0x%0X",can_msg.id);
+                // NRF_LOG_INFO("[%d]GET RX0 0x%0X",xTaskGetTickCount(),can_msg.id);
+                // NRF_LOG_HEXDUMP_INFO(can_msg.data,8);
             }
 
             if((data & (1<<1))){
                 mcp2515_get_msg(1, &can_msg);
                 adlm_parse_msg(&can_msg);
-                //NRF_LOG_INFO("GET RX1 0x%0X",can_msg.id);
+                // NRF_LOG_INFO("[%d]GET RX1 0x%0X",xTaskGetTickCount(),can_msg.id);
+                // NRF_LOG_HEXDUMP_INFO(can_msg.data,8);
             }
-
         }
     }
 }
@@ -108,7 +109,6 @@ int main(void)
     APP_ERROR_CHECK(err_code);
 
     NRF_LOG_DEFAULT_BACKENDS_INIT();
-
     NRF_LOG_INFO("Start");
 
     err_code = nrf_drv_clock_init();
@@ -125,10 +125,10 @@ int main(void)
 
     power_management_init();
     bluetooth_start(0);
-    xOneSec_Timer = xTimerCreate( "1STimer",pdMS_TO_TICKS(1000),pdTRUE,( void * ) 0, vOneSecTimer);
-    xTimerStart(xOneSec_Timer,0);
+    // xOneSec_Timer = xTimerCreate( "1STimer",pdMS_TO_TICKS(1000),pdTRUE,( void * ) 0, vOneSecTimer);
+    // xTimerStart(xOneSec_Timer,0);
 
-    xTaskCreate(blink_task, "Blink", 256, NULL, 2, NULL);
+    //xTaskCreate(blink_task, "Blink", 256, NULL, 2, NULL);
     xTaskCreate(can_task, "Can", 1024, NULL, 2, (TaskHandle_t *)&xCanTask);
     
     vTaskStartScheduler();
