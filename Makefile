@@ -15,7 +15,8 @@ SRC_FILES += \
   $(PROJ_DIR)/src/mcp2515_hal.c \
   $(PROJ_DIR)src/mcp2515.c \
   $(PROJ_DIR)src/can_abit.c \
-  $(PROJ_DIR)/src/leds.c
+  $(PROJ_DIR)/src/leds.c \
+  $(PROJ_DIR)/src/uart.c
 
 #LOG RTT
 SRC_FILES += \
@@ -36,6 +37,10 @@ SRC_FILES += \
   $(SDK_ROOT)/components/softdevice/common/nrf_sdh_freertos.c \
   $(SDK_ROOT)/components/softdevice/common/nrf_sdh_soc.c \
 
+#uart
+SRC_FILES += \
+  $(SDK_ROOT)/components/libraries/fifo/app_fifo.c \
+  $(SDK_ROOT)/components/libraries/uart/app_uart_fifo.c \
 
 
 # Source files common to all targets
@@ -116,6 +121,8 @@ SRC_FILES += \
 # Include folders common to all targets
 INC_FOLDERS += \
   $(PROJ_DIR)/config \
+  $(SDK_ROOT)/components/libraries/uart \
+  $(SDK_ROOT)/components/libraries/fifo \
   $(SDK_ROOT)/components/nfc/ndef/generic/message \
   $(SDK_ROOT)/components/nfc/t2t_lib \
   $(SDK_ROOT)/components/nfc/t4t_parser/hl_detection_procedure \
@@ -166,6 +173,7 @@ INC_FOLDERS += \
   $(SDK_ROOT)/components/ble/ble_services/ble_ans_c \
   $(SDK_ROOT)/components/libraries/slip \
   $(SDK_ROOT)/components/libraries/delay \
+  $(SDK_ROOT)/components/libraries/uart \
   $(SDK_ROOT)/components/libraries/csense_drv \
   $(SDK_ROOT)/components/libraries/memobj \
   $(SDK_ROOT)/components/ble/ble_services/ble_nus_c \

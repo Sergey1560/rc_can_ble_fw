@@ -11,6 +11,7 @@
 
 #include "mcp2515.h"
 #include "can_abit.h"
+#include "uart.h"
 
 #include "FreeRTOS.h"
 #include "task.h"
@@ -123,6 +124,8 @@ int main(void)
         for(uint32_t k=0; k<0x100000; k++){__NOP();};
     }
 
+    uart_init();
+    
     power_management_init();
     bluetooth_start(0);
     // xOneSec_Timer = xTimerCreate( "1STimer",pdMS_TO_TICKS(1000),pdTRUE,( void * ) 0, vOneSecTimer);
