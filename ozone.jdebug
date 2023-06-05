@@ -33,7 +33,7 @@ void OnProjectLoad (void) {
   // User settings
   //
   Project.SetOSPlugin("FreeRTOSPlugin_CM4");
-  File.Open ("$(ProjectDir)/build/nrf52832_xxaa.out");
+  File.Open ("$(ProjectDir)/build/firmware.out");
 }
 
 /*********************************************************************

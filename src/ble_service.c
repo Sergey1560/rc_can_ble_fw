@@ -3,7 +3,7 @@
 #include "ble_srv_common.h"
 #include <string.h>
 #include "nrf_gpio.h"
-#include "boards.h"
+//#include "boards.h"
 #include "nrf_log.h"
 #include "mcp2515.h"
 #include "can_abit.h"

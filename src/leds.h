@@ -13,9 +13,9 @@
 #define LEDS_INCTIVE_STATE 1
 
 
-#define LED_CONNECTION     17
-#define LED_CAN_DATA       18
-#define LED_ALIVE          19
+#define LED_CONNECTION     43
+//#define LED_CAN_DATA       18
+#define LED_ALIVE          29
 
 void rc_leds_init(void);
 

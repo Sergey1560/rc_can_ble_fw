@@ -12,14 +12,13 @@
                 "${workspaceFolder}/config"
             ],
             "defines": [
-                "BOARD_PCA10040",
+                "BOARD_PCA10056",
                 "BSP_DEFINES_ONLY",
                 "CONFIG_GPIO_AS_PINRESET",
                 "ESB_PRESENT",
                 "FLOAT_ABI_HARD",
-                "NRF52",
-                "NRF52832_XXAA",
-                "NRF52_PAN_74"
+                "NRF52840_XXAA",
+                "SOFTDEVICE_PRESENT"
             ],
             "cStandard": "c11",
             "cppStandard": "c++17",

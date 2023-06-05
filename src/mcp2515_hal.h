@@ -5,7 +5,7 @@
 #include "app_util_platform.h"
 #include "nrf_gpio.h"
 #include "nrf_delay.h"
-#include "boards.h"
+//#include "boards.h"
 #include "app_error.h"
 #include <string.h>
 #include "nrf_log.h"
@@ -14,10 +14,10 @@
 
 #define SPI_INSTANCE    0 /**< SPI instance index. */
 #define SPI_SCK_PIN     5
-#define SPI_MOSI_PIN    6
-#define SPI_MISO_PIN    7
-#define SPI_SS_PIN      8
-#define MCP_INT_PIN     20
+#define SPI_MOSI_PIN    1
+#define SPI_MISO_PIN    0
+#define SPI_SS_PIN      13
+#define MCP_INT_PIN     24
 
 #define DEBUG(...)        NRF_LOG_INFO(__VA_ARGS__)
 
