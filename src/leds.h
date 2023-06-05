@@ -9,8 +9,8 @@
 #include "nrf_drv_common.h"
 
 
-#define LEDS_ACTIVE_STATE  0
-#define LEDS_INCTIVE_STATE 1
+#define LEDS_ACTIVE_STATE  1
+#define LEDS_INCTIVE_STATE 0
 
 
 #define LED_CONNECTION     43
