@@ -16,7 +16,8 @@ SRC_FILES += \
   $(PROJ_DIR)src/mcp2515.c \
   $(PROJ_DIR)src/can_abit.c \
   $(PROJ_DIR)/src/leds.c \
-  $(PROJ_DIR)/src/uart.c
+  $(PROJ_DIR)/src/uart.c \
+  $(PROJ_DIR)/src/ublox.c
 
 #LOG RTT
 SRC_FILES += \

@@ -5,9 +5,21 @@
 #include "nrf_drv_common.h"
 #include "nrf_drv_uart.h"
 
+#include "FreeRTOS.h"
+#include "task.h"
+#include "queue.h"
+#include "semphr.h"
 
-#define RX_PIN_NUMBER       15
-#define TX_PIN_NUMBER       26
+#include "ublox.h"
+
+//#define USE_APP_UART
+#define USE_NATIVE_UART
+
+#define RX_PIN 15
+#define TX_PIN 26
+
+extern volatile TaskHandle_t xGpsParse;
+extern volatile TaskHandle_t xGpsTask;
 
 void uart_init(void);
 
