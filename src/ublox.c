@@ -59,27 +59,28 @@ void ublox_input(uint8_t Data){
 			payload_size=(UBX_MSG_MAX_LEN-1);
 	}else if(ubx_msg_start == 1){
 		ubx_msg_start=0;
-		NRF_LOG_ERROR("Error parse ubx");
 	}else if(ubx_msg_start >=2){
-		if(ubx_msg_index < (payload_size+4)){ 
+		if(ubx_msg_index < (payload_size+6)){ 
 			ubx_msg[ubx_msg_index]=(uint8_t)Data;
 
 			if(ubx_msg_index == 3) {
 				payload_size = (ubx_msg[ubx_msg_index] << 8) | ubx_msg[ubx_msg_index-1];
 				if((payload_size+6) > UBX_MSG_MAX_LEN){
-					NRF_LOG_ERROR("UBX pkt size error");
 					ubx_msg_start=0;
 				};
 			};
 			ubx_msg_start++;
 			ubx_msg_index++;
 		}else{
+			
 			new_msg.msgid = (ubx_msg[0] << 8) | ubx_msg[1];
-			new_msg.size = payload_size+2;
+			new_msg.size = payload_size;
+			
 			for(uint32_t i=0; i<payload_size+2; i++){
-				new_msg.payload[i] = ubx_msg[i];
+				new_msg.payload[i] = ubx_msg[i+4];
 			}
 
+			//NRF_LOG_INFO("Get msgid 0x%04X size %d",new_msg.msgid,new_msg.size);
 
 			if(((uint8_t)Data == 0xB5)) {  //Next packet comming 
 				ubx_msg_start=1;
@@ -91,7 +92,10 @@ void ublox_input(uint8_t Data){
 			if(xGpsParse != NULL){
 				vTaskNotifyGiveFromISR(xGpsParse, NULL);
 			}
+
 		};
+	}else{
+		NRF_LOG_INFO("Byte not in order");
 	};
 }
 
@@ -289,13 +293,13 @@ uint16_t  ublox_crc(struct ubx_packet* pkt){
 	cka+=(uint8_t)(pkt->msgid & 0xFF);
 	ckb+=cka;
 
-	cka+=(uint8_t)((pkt->size - 2) & 0xFF);
+	cka+=(uint8_t)((pkt->size) & 0xFF);
 	ckb+=cka;
 
-	cka+=(uint8_t)(((pkt->size - 2) >> 8) & 0xFF);
+	cka+=(uint8_t)(((pkt->size) >> 8) & 0xFF);
 	ckb+=cka;
 
-	for(uint32_t i=0; i<(pkt->size-2); i++){
+	for(uint32_t i=0; i<(pkt->size); i++){
 		cka+=pkt->payload[i];
 		ckb+=cka;
 		crc=(uint16_t)(cka << 8)|(ckb);
