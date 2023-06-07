@@ -30,6 +30,7 @@ void* ublox_select_func(uint16_t msg_id){
 			break;
 		};
 		case UBX_ACK_ACK: {
+			NRF_LOG_INFO("Ack packet");
 			ubx_parse=ublox_parse_ack;
 			break;
 		};
@@ -80,7 +81,7 @@ void ublox_input(uint8_t Data){
 				new_msg.payload[i] = ubx_msg[i+4];
 			}
 
-			//NRF_LOG_INFO("Get msgid 0x%04X size %d",new_msg.msgid,new_msg.size);
+			NRF_LOG_INFO("Get msgid 0x%04X size %d",new_msg.msgid,new_msg.size);
 
 			if(((uint8_t)Data == 0xB5)) {  //Next packet comming 
 				ubx_msg_start=1;
@@ -95,7 +96,7 @@ void ublox_input(uint8_t Data){
 
 		};
 	}else{
-		NRF_LOG_INFO("Byte not in order");
+		//NRF_LOG_INFO("Byte not in order");
 	};
 }
 
@@ -341,7 +342,9 @@ void  ublox_parse_ack(uint8_t *msg, uint8_t len){
 	
 	ubx_ack = (msg[0] << 8) | msg[1];
 	(void)ubx_ack;
-	
+
+	NRF_LOG_INFO("Get ASK 0x%04X",ubx_ack);
+
 	//xEventGroupSetBits(xGpsEventGroup,ubx_ack);
 	xTaskNotifyFromISR(xGpsTask, ubx_ack, eSetBits, NULL);
 };

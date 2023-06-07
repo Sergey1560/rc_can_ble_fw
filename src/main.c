@@ -27,12 +27,12 @@ void assert_nrf_callback(uint16_t line_num, const uint8_t * p_file_name)
     app_error_handler(DEAD_BEEF, line_num, p_file_name);
 }
 
-static void power_management_init(void)
-{
-    ret_code_t err_code;
-    err_code = nrf_pwr_mgmt_init();
-    APP_ERROR_CHECK(err_code);
-}
+// static void power_management_init(void)
+// {
+//     ret_code_t err_code;
+//     err_code = nrf_pwr_mgmt_init();
+//     APP_ERROR_CHECK(err_code);
+// }
 
 void blink_task(void *p){
     while(1){
@@ -115,6 +115,13 @@ int main(void)
 
     err_code = nrf_drv_clock_init();
     APP_ERROR_CHECK(err_code);
+    
+   nrf_drv_clock_hfclk_request(NULL);
+   while (!nrf_drv_clock_hfclk_is_running()){}
+
+   nrf_drv_clock_lfclk_request(NULL);
+   while (!nrf_drv_clock_lfclk_is_running()){}
+
     rc_leds_init();
     rc_led_all(0);
 
@@ -127,12 +134,24 @@ int main(void)
 
     uart_init();
     
-    power_management_init();
-    bluetooth_start(0);
+    //power_management_init();
+    //bluetooth_start(0);
 
-    xTaskCreate(can_task, "Can", 1024, NULL, 2, (TaskHandle_t *)&xCanTask);
+    //xTaskCreate(can_task, "Can", 1024, NULL, 2, (TaskHandle_t *)&xCanTask);
     vTaskStartScheduler();
 
     while(1);
 }
 
+
+
+void vApplicationStackOverflowHook(TaskHandle_t xTask, char* pcTaskName)
+{
+    {
+		NRF_LOG_ERROR("Task %s stack ovewflow",pcTaskName);
+	    while (1)
+        {
+            __NOP();
+        }
+    }
+}

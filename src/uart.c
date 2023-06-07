@@ -9,29 +9,63 @@ volatile TaskHandle_t xGpsTask;
 volatile TaskHandle_t xGpsParse;
 volatile QueueHandle_t GpsCmdQ_Handle;
 
-const uint32_t uart_speed_list[]={UART_BAUDRATE_BAUDRATE_Baud115200,UART_BAUDRATE_BAUDRATE_Baud921600,UART_BAUDRATE_BAUDRATE_Baud38400,UART_BAUDRATE_BAUDRATE_Baud9600,UART_BAUDRATE_BAUDRATE_Baud57600,UART_BAUDRATE_BAUDRATE_Baud460800};
-const uint32_t uart_speed_val[]={115200,921600,38400,9600,57600,460800};
+const uint32_t uart_speed_list[]={UART_BAUDRATE_BAUDRATE_Baud9600,UART_BAUDRATE_BAUDRATE_Baud19200,UART_BAUDRATE_BAUDRATE_Baud38400};
+const uint32_t uart_speed_val[]={9600,19200,38400};
 
 static nrf_drv_uart_t m_uart = NRF_DRV_UART_INSTANCE(0);
-uint8_t __attribute__ ((aligned (4))) uart_data[256];
 uint8_t __attribute__ ((aligned (4))) uart_tx_data[2048];
-
 
 static void uart_config(uint32_t speed);
 
+// static void uart_error_desk(uint32_t mask){
+//     //nrf_uart_error_mask_t
+
+//     if(mask & NRF_UART_ERROR_OVERRUN_MASK){
+//         NRF_LOG_ERROR("->OVERRUN");
+//     }
+//     if(mask & NRF_UART_ERROR_PARITY_MASK){
+//         NRF_LOG_ERROR("->PARITY");
+//     }
+//     if(mask & NRF_UART_ERROR_FRAMING_MASK){
+//         NRF_LOG_ERROR("->FRAMING");
+//     }
+//     if(mask & NRF_UART_ERROR_BREAK_MASK){
+//         NRF_LOG_ERROR("->BREAK");
+//     }
+
+//     mask &= ~(NRF_UART_ERROR_OVERRUN_MASK|NRF_UART_ERROR_PARITY_MASK|NRF_UART_ERROR_FRAMING_MASK|NRF_UART_ERROR_BREAK_MASK);
+
+
+// }
+
 
 static void uart_event_handler(nrf_drv_uart_event_t * p_event, void* p_context){
+    uint8_t uart_data;
     if (p_event->type == NRF_DRV_UART_EVT_RX_DONE){
         if (p_event->data.rxtx.bytes){
-            NRF_LOG_INFO("Get %d bytes",p_event->data.rxtx.bytes);
-            nrf_drv_uart_rx(&m_uart, uart_data,p_event->data.rxtx.bytes);
-            for(uint32_t i=0; i<p_event->data.rxtx.bytes; i++){
-                ublox_input((uint8_t)uart_data[i]);
-            }
+            nrf_drv_uart_rx(&m_uart, &uart_data, 1);
+            //NRF_LOG_INFO("Get byte");
+            ublox_input((uint8_t)uart_data);
         }
     }
     else if (p_event->type == NRF_DRV_UART_EVT_ERROR){
-       //NRF_LOG_ERROR("UART ERROR %d",p_event->data.error.error_mask);
+       //NRF_LOG_ERROR("UART ERROR %d:",p_event->data.error.error_mask);
+       nrf_uart_event_clear(NRF_UART0, NRF_UART_EVENT_RXTO);
+       nrf_uart_event_clear(NRF_UART0, NRF_UART_EVENT_RXDRDY);
+       nrf_uart_event_clear(NRF_UART0, NRF_UART_EVENT_ERROR);
+
+        
+        if(p_event->data.error.error_mask & NRF_UART_ERROR_OVERRUN_MASK)
+        for(uint32_t i = 0; i < 6; i++)
+        {
+            nrf_uart_rxd_get(m_uart.uart.p_reg);
+        }        
+        
+        nrf_drv_uart_rx(&m_uart, &uart_data, 1);
+       
+        //uart_error_desk(p_event->data.error.error_mask);
+             
+       
     }else if (p_event->type == NRF_DRV_UART_EVT_TX_DONE){
        //NRF_LOG_ERROR("TX DONE");
     }
@@ -48,8 +82,7 @@ void vTaskGpsParse(void *arg){
         crc = (new_msg.payload[new_msg.size] << 8) | (new_msg.payload[new_msg.size+1]);
         calc_crc = ublox_crc((struct ubx_packet*)&new_msg);
 
-        if(crc ==  calc_crc){  //Packet Ok, Parse here
-            //NRF_LOG_INFO("CRC OK");
+        if(crc ==  calc_crc){  
             ubx_parse = ublox_select_func(new_msg.msgid);
             if(ubx_parse != NULL){
                 ubx_parse((uint8_t *)new_msg.payload,new_msg.size);
@@ -70,125 +103,125 @@ static void uart_send_data(uint8_t *data, uint32_t len){
 
 
 void vTaskGps(void *arg){
-	// struct ubx_cmd cmd;
-	// uint16_t msg_class;
-	// uint32_t ulNotifiedValue;
-    // BaseType_t xResult;
-	//uint8_t uart_br_found=0;
+	struct ubx_cmd cmd;
+	uint16_t msg_class;
+	uint32_t ulNotifiedValue;
+    BaseType_t xResult;
+	uint8_t uart_br_found=0;
 
 	/* Очередь команд к GPS приемнику */
 	GpsCmdQ_Handle = xQueueCreate( 30, sizeof(struct ubx_cmd));
-	vTaskDelay(1700); //Задержка, для включения модуля GPS
-    
-    uart_config(UART_BAUDRATE_BAUDRATE_Baud115200);
-    // uart_config(UART_BAUDRATE_BAUDRATE_Baud9600);
-    // vTaskDelay(1000);
-	// for(uint32_t i=0; i<(sizeof(uart_speed_list)/sizeof(uart_speed_list[0])); i++){
-	// 	NRF_LOG_INFO("Trying GPS at %d",uart_speed_val[i]);
+	vTaskDelay(1000); //Задержка, для включения модуля GPS
 
-	// 	uart_config(uart_speed_list[i]);
-	// 	nrf_drv_uart_tx(&m_uart, (uint8_t *)ubx_poll_ver,sizeof(ubx_poll_ver));
+	for(uint32_t i=0; i<(sizeof(uart_speed_list)/sizeof(uart_speed_list[0])); i++){
+		NRF_LOG_INFO("Trying GPS at %d",uart_speed_val[i]);
 
-    //     msg_class = ((ubx_poll_ver[2] << 8)|ubx_poll_ver[3]);
+		uart_config(uart_speed_list[i]);
+		uart_send_data((uint8_t *)ubx_poll_ver,sizeof(ubx_poll_ver));
+        vTaskDelay(100);
+        uart_send_data((uint8_t *)ubx_poll_ver,sizeof(ubx_poll_ver));
+
+        msg_class = ((ubx_poll_ver[2] << 8)|ubx_poll_ver[3]);
 		
-    //     xResult = xTaskNotifyWait(pdFALSE,     /* Не очищать биты на входе. */
-    //                         0xffffffff,        /* На выходе очищаются все биты. */
-    //                         &ulNotifiedValue, /* Здесь хранится значение оповещения. */
-    //                         pdMS_TO_TICKS(1000));  /* Время таймаута на блокировке. */
+        xResult = xTaskNotifyWait(pdFALSE,     /* Не очищать биты на входе. */
+                            0xffffffff,        /* На выходе очищаются все биты. */
+                            &ulNotifiedValue, /* Здесь хранится значение оповещения. */
+                            pdMS_TO_TICKS(1000));  /* Время таймаута на блокировке. */
 
-    //     if(xResult == pdTRUE){
-    //         if(ulNotifiedValue == msg_class){ 
-    //             NRF_LOG_INFO("GPS baudrate found, %d",uart_speed_val[i]);
-    //             uart_br_found=1;
-    //             break;
-    //         };
-    //     }else{
-    //         NRF_LOG_INFO("Timeout gps answer at %d",uart_speed_val[i]);
-    //     }
+        if(xResult == pdTRUE){
+            if(ulNotifiedValue == msg_class){ 
+                NRF_LOG_INFO("GPS baudrate found, %d 0x%04X 0x%04X",uart_speed_val[i],ulNotifiedValue,msg_class);
+                uart_br_found=1;
+                break;
+            }else{
+                NRF_LOG_ERROR("GPS Notify val 0x%0X msg 0x%0X",ulNotifiedValue,msg_class);
+            };
+        }else{
+            NRF_LOG_INFO("Timeout gps answer");
+        }
 		
-	// }
+	}
 
-	// if(!uart_br_found){
-	// 	NRF_LOG_ERROR("Can't setup uart baudrate");
-	// 	vTaskSuspend(NULL);
-	// }
+	if(!uart_br_found){
+		NRF_LOG_ERROR("Can't setup uart baudrate");
+		vTaskSuspend(NULL);
+	}
+
+    while(1);
 
 	NRF_LOG_INFO("Setup new baudrate");
-	uart_send_data((uint8_t *)ubx_cfg_prt_ubx_only_115200,sizeof(ubx_cfg_prt_ubx_only_115200));
+	uart_send_data((uint8_t *)ubx_cfg_prt_ubx_only_19200,sizeof(ubx_cfg_prt_ubx_only_19200));
+    uart_config(UART_BAUDRATE_BAUDRATE_Baud19200);
     vTaskDelay(100);
-	
-    uart_config(UART_BAUDRATE_BAUDRATE_Baud115200);
-    uart_send_data((uint8_t *)ubx_cfg_prt_ubx_only_115200,sizeof(ubx_cfg_prt_ubx_only_115200));
+    nrf_drv_uart_tx(&m_uart, (uint8_t *)ubx_poll_ver,sizeof(ubx_poll_ver));
 
-    vTaskDelay(100);
-    uart_send_data((uint8_t *)ubx_msg_navpvt_enable,sizeof(ubx_msg_navpvt_enable));
 
-	// //Отключить сообщение одометра
-	// cmd.cmd=(uint8_t *)ubx_cfg_msg_odo_disable;
-	// cmd.size=sizeof(ubx_cfg_msg_odo_disable);
-	// xQueueSend(GpsCmdQ_Handle,&cmd,portTICK_PERIOD_MS);
+	//Отключить сообщение одометра
+	cmd.cmd=(uint8_t *)ubx_cfg_msg_odo_disable;
+	cmd.size=sizeof(ubx_cfg_msg_odo_disable);
+	xQueueSend(GpsCmdQ_Handle,&cmd,portTICK_PERIOD_MS);
 
-	// //Остановка одометра
-	// cmd.cmd=(uint8_t *)ubx_cfg_odo_stop;
-	// cmd.size=sizeof(ubx_cfg_odo_stop);
-	// xQueueSend(GpsCmdQ_Handle,&cmd,portTICK_PERIOD_MS);
-
-	// //Сброс одометра
-	// cmd.cmd=(uint8_t *)ubx_msg_odo_reset;
-	// cmd.size=sizeof(ubx_msg_odo_reset);
-	// xQueueSend(GpsCmdQ_Handle,&cmd,portTICK_PERIOD_MS);
-
-	// //Сообщения NAVPVT
-	// cmd.cmd=(uint8_t *)ubx_msg_navpvt_enable;
-	// cmd.size=sizeof(ubx_msg_navpvt_enable);
-	// xQueueSend(GpsCmdQ_Handle,&cmd,portTICK_PERIOD_MS);
-
-	// //Сообщение NAVSAT
-	// cmd.cmd=(uint8_t *)ubx_msg_navsat_disable;
-	// cmd.size=sizeof(ubx_msg_navsat_disable);
-	// xQueueSend(GpsCmdQ_Handle,&cmd,portTICK_PERIOD_MS);
-
-	// //Сообщение CFG-NAV5
-	// cmd.cmd=(uint8_t *)ubx_cfg_nav5_auto;
-	// cmd.size=sizeof(ubx_cfg_nav5_auto);
-	// xQueueSend(GpsCmdQ_Handle,&cmd,portTICK_PERIOD_MS);
-
-	// //Сообщение 10Hz
-	// cmd.cmd=(uint8_t *)ubx_cfg_rate_10Hz;
-	// cmd.size=sizeof(ubx_cfg_rate_10Hz);
-	// xQueueSend(GpsCmdQ_Handle,&cmd,portTICK_PERIOD_MS);
-
-	// //Запрос номера версии
-	// cmd.cmd=(uint8_t *)ubx_poll_ver;
-	// cmd.size=sizeof(ubx_poll_ver);
-	// xQueueSend(GpsCmdQ_Handle,&cmd,portTICK_PERIOD_MS);
+	//Остановка одометра
+	cmd.cmd=(uint8_t *)ubx_cfg_odo_stop;
+	cmd.size=sizeof(ubx_cfg_odo_stop);
+	xQueueSend(GpsCmdQ_Handle,&cmd,portTICK_PERIOD_MS);
+ 
+	//Сброс одометра
+	cmd.cmd=(uint8_t *)ubx_msg_odo_reset;
+	cmd.size=sizeof(ubx_msg_odo_reset);
+	xQueueSend(GpsCmdQ_Handle,&cmd,portTICK_PERIOD_MS);
+ 
+	//Сообщения NAVPVT
+	cmd.cmd=(uint8_t *)ubx_msg_navpvt_enable;
+	cmd.size=sizeof(ubx_msg_navpvt_enable);
+	xQueueSend(GpsCmdQ_Handle,&cmd,portTICK_PERIOD_MS);
+ 
+    //Сообщение NAVSAT
+	cmd.cmd=(uint8_t *)ubx_msg_navsat_disable;
+	cmd.size=sizeof(ubx_msg_navsat_disable);
+	xQueueSend(GpsCmdQ_Handle,&cmd,portTICK_PERIOD_MS);
+ 
+	//Сообщение CFG-NAV5
+	cmd.cmd=(uint8_t *)ubx_cfg_nav5_auto;
+	cmd.size=sizeof(ubx_cfg_nav5_auto);
+	xQueueSend(GpsCmdQ_Handle,&cmd,portTICK_PERIOD_MS);
+ 
+	//Сообщение 10Hz
+	cmd.cmd=(uint8_t *)ubx_cfg_rate_10Hz;
+	cmd.size=sizeof(ubx_cfg_rate_10Hz);
+	xQueueSend(GpsCmdQ_Handle,&cmd,portTICK_PERIOD_MS);
+ 
+	//Запрос номера версии
+	cmd.cmd=(uint8_t *)ubx_poll_ver;
+	cmd.size=sizeof(ubx_poll_ver);
+	xQueueSend(GpsCmdQ_Handle,&cmd,portTICK_PERIOD_MS);
 	
 
 	/* Основной цикл обработки команд из очереди */
 
 	while(1){
-		// if(xQueuePeek(GpsCmdQ_Handle,&cmd,portMAX_DELAY)){  //Получить команду, но не убирать из очереди
-		// 	msg_class = ((cmd.cmd[2] << 8)|cmd.cmd[3]);
-		// 	uart_send_data(cmd.cmd,cmd.size);
+		if(xQueuePeek(GpsCmdQ_Handle,&cmd,portMAX_DELAY)){  //Получить команду, но не убирать из очереди
+			msg_class = ((cmd.cmd[2] << 8)|cmd.cmd[3]);
+			uart_send_data(cmd.cmd,cmd.size);
 
-		// 	//Ждать 2 секунды выставления флагов. Флаг выставляется
-		// 	//при приеме ACK пакета в значение MSG_ID
-        //     xResult = xTaskNotifyWait(pdFALSE,     /* Не очищать биты на входе. */
-        //                         0xffffffff,        /* На выходе очищаются все биты. */
-        //                         &ulNotifiedValue, /* Здесь хранится значение оповещения. */
-        //                         pdMS_TO_TICKS(2000));  /* Время таймаута на блокировке. */
+			//Ждать 2 секунды выставления флагов. Флаг выставляется
+			//при приеме ACK пакета в значение MSG_ID
+            xResult = xTaskNotifyWait(pdFALSE,     /* Не очищать биты на входе. */
+                                0xffffffff,        /* На выходе очищаются все биты. */
+                                &ulNotifiedValue, /* Здесь хранится значение оповещения. */
+                                pdMS_TO_TICKS(2000));  /* Время таймаута на блокировке. */
 
-        //     if(xResult == pdTRUE){
-        //         if(ulNotifiedValue == msg_class){ 
-        //             xQueueReceive(GpsCmdQ_Handle,&cmd,0);
-        //         }else{
-        //             NRF_LOG_ERROR("GPS Notify val 0x%0X msg 0x%0X",ulNotifiedValue,msg_class);
-        //         };
-        //     }else{
-        //         NRF_LOG_INFO("GPS cmd timeout %0X",msg_class);
-        //     }
-		// };
-        vTaskDelay(1000);
+            if(xResult == pdTRUE){
+                if(ulNotifiedValue == msg_class){ 
+                    xQueueReceive(GpsCmdQ_Handle,&cmd,0);
+                }else{
+                    NRF_LOG_ERROR("GPS Notify val 0x%0X msg 0x%0X",ulNotifiedValue,msg_class);
+                };
+            }else{
+                NRF_LOG_INFO("GPS cmd timeout %0X",msg_class);
+            }
+		};
+//        vTaskDelay(1000);
 	}	
 
 }
@@ -206,6 +239,7 @@ static void uart_config(uint32_t speed){
     uart_config.parity = NRF_UART_PARITY_EXCLUDED;
     uart_config.pselrxd = RX_PIN; 
     uart_config.pseltxd = TX_PIN; 
+    uart_config.interrupt_priority = 2;
 
     err_code = nrf_drv_uart_init(&m_uart, &uart_config, uart_event_handler);
   
