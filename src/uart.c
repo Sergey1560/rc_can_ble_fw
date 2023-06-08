@@ -3,8 +3,6 @@
 #include "app_error.h"
 #include "nrf_delay.h"
 
-#ifdef USE_NATIVE_UART
-
 volatile TaskHandle_t xGpsTask;
 volatile TaskHandle_t xGpsParse;
 volatile QueueHandle_t GpsCmdQ_Handle;
@@ -17,27 +15,28 @@ uint8_t __attribute__ ((aligned (4))) uart_tx_data[2048];
 
 static void uart_config(uint32_t speed);
 
-// static void uart_error_desk(uint32_t mask){
-//     //nrf_uart_error_mask_t
+/*
+static void uart_error_desk(uint32_t mask){
+    //nrf_uart_error_mask_t
 
-//     if(mask & NRF_UART_ERROR_OVERRUN_MASK){
-//         NRF_LOG_ERROR("->OVERRUN");
-//     }
-//     if(mask & NRF_UART_ERROR_PARITY_MASK){
-//         NRF_LOG_ERROR("->PARITY");
-//     }
-//     if(mask & NRF_UART_ERROR_FRAMING_MASK){
-//         NRF_LOG_ERROR("->FRAMING");
-//     }
-//     if(mask & NRF_UART_ERROR_BREAK_MASK){
-//         NRF_LOG_ERROR("->BREAK");
-//     }
+    if(mask & NRF_UART_ERROR_OVERRUN_MASK){
+        NRF_LOG_ERROR("->OVERRUN");
+    }
+    if(mask & NRF_UART_ERROR_PARITY_MASK){
+        NRF_LOG_ERROR("->PARITY");
+    }
+    if(mask & NRF_UART_ERROR_FRAMING_MASK){
+        NRF_LOG_ERROR("->FRAMING");
+    }
+    if(mask & NRF_UART_ERROR_BREAK_MASK){
+        NRF_LOG_ERROR("->BREAK");
+    }
 
-//     mask &= ~(NRF_UART_ERROR_OVERRUN_MASK|NRF_UART_ERROR_PARITY_MASK|NRF_UART_ERROR_FRAMING_MASK|NRF_UART_ERROR_BREAK_MASK);
+    mask &= ~(NRF_UART_ERROR_OVERRUN_MASK|NRF_UART_ERROR_PARITY_MASK|NRF_UART_ERROR_FRAMING_MASK|NRF_UART_ERROR_BREAK_MASK);
 
 
-// }
-
+}
+*/
 
 static void uart_event_handler(nrf_drv_uart_event_t * p_event, void* p_context){
     uint8_t uart_data;
@@ -55,11 +54,13 @@ static void uart_event_handler(nrf_drv_uart_event_t * p_event, void* p_context){
        nrf_uart_event_clear(NRF_UART0, NRF_UART_EVENT_ERROR);
 
         
-        if(p_event->data.error.error_mask & NRF_UART_ERROR_OVERRUN_MASK)
-        for(uint32_t i = 0; i < 6; i++)
-        {
-            nrf_uart_rxd_get(m_uart.uart.p_reg);
-        }        
+        if(p_event->data.error.error_mask & NRF_UART_ERROR_OVERRUN_MASK){
+            NRF_LOG_ERROR("UART OVR");
+            for(uint32_t i = 0; i < 6; i++)
+            {
+                nrf_uart_rxd_get(m_uart.uart.p_reg);
+            }        
+        }
         
         nrf_drv_uart_rx(&m_uart, &uart_data, 1);
        
@@ -264,7 +265,7 @@ static void uart_config(uint32_t speed){
     uart_config.parity = NRF_UART_PARITY_EXCLUDED;
     uart_config.pselrxd = RX_PIN; 
     uart_config.pseltxd = TX_PIN; 
-    uart_config.interrupt_priority = 2;
+    //uart_config.interrupt_priority = 2;
 
     err_code = nrf_drv_uart_init(&m_uart, &uart_config, uart_event_handler);
   
@@ -289,55 +290,3 @@ void uart_init(void){
 
 };
 
-#endif
-
-#ifdef USE_APP_UART
-#define UART_TX_BUF_SIZE 256                         /**< UART TX buffer size. */
-#define UART_RX_BUF_SIZE 256                         /**< UART RX buffer size. */
-#define UART_HWFC APP_UART_FLOW_CONTROL_DISABLED
-
-
-void uart_error_handle(app_uart_evt_t * p_event)
-{
-    uint8_t cr;
-    
-    if (p_event->evt_type == APP_UART_COMMUNICATION_ERROR)
-    {
-        APP_ERROR_HANDLER(p_event->data.error_communication);
-    }
-    else if (p_event->evt_type == APP_UART_FIFO_ERROR)
-    {
-        APP_ERROR_HANDLER(p_event->data.error_code);
-    }else if(p_event->evt_type == APP_UART_DATA_READY)
-        app_uart_get(&cr);
-        NRF_LOG_INFO("UART DATA %c",cr);
-    {
-    }
-
-}
-
-void uart_init(void){
-    uint32_t err_code;
-
-    const app_uart_comm_params_t comm_params =
-      {
-          RX_PIN,
-          TX_PIN,
-          NRF_UART_PSEL_DISCONNECTED,
-          NRF_UART_PSEL_DISCONNECTED,
-          UART_HWFC,
-          false,
-          NRF_UART_BAUDRATE_115200
-      };
-
-    APP_UART_FIFO_INIT(&comm_params,
-                         UART_RX_BUF_SIZE,
-                         UART_TX_BUF_SIZE,
-                         uart_error_handle,
-                         APP_IRQ_PRIORITY_LOWEST,
-                         err_code);
-
-    APP_ERROR_CHECK(err_code);
-};
-
-#endif

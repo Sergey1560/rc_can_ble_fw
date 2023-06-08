@@ -23,12 +23,10 @@
 
 #define CAN_MAIN_UUID                   0x0001
 #define CAN_MAIN_UUID_LEN               12 // 4 extID + 8 data
-#define CAN_MAIN_DATA_INTERVAL          100
+#define CAN_MAIN_DATA_INTERVAL          2000
 
 #define CAN_FILTER_UUID                 0x0002
 #define CAN_FILTER_UUID_LEN             8 // 4 extID + 8 data
-
-#define RCDIY_NOTIFICATION_INTERVAL     APP_TIMER_TICKS(100)
 
 typedef enum
 {

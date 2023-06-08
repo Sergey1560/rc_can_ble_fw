@@ -40,7 +40,7 @@ void ble_notify_task(void *p){
         adlm_pack_data((uint8_t *)can_data);
         update_can_data((uint8_t *)can_data, CAN_MAIN_UUID_LEN);
 
-        vTaskDelay(100);
+        vTaskDelay(CAN_MAIN_DATA_INTERVAL);
     }
 }
 
@@ -351,8 +351,7 @@ void ble_cus_on_ble_evt( ble_evt_t const * p_ble_evt, void * p_context)
 uint32_t ble_candata_update(ble_cus_t * p_cus, uint8_t *data, uint32_t len)
 {
     //NRF_LOG_INFO("ble_candata_update"); 
-    if (p_cus == NULL)
-    {
+    if (p_cus == NULL){
         return NRF_ERROR_NULL;
     }
 

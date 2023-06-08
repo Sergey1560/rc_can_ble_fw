@@ -34,13 +34,13 @@ static void ble_stack_init(void);
 static void peer_manager_init(void);
 static void delete_bonds(void);
 static void advertising_init(void);
-//static void advertising_start(bool erase_bonds);
 static void pm_evt_handler(pm_evt_t const * p_evt);
 
 uint32_t update_can_data(uint8_t *data, uint32_t len){
     ret_code_t err_code = NRF_SUCCESS;
 
     rc_led_candata_invert();
+    NRF_LOG_INFO("Update");
     if(notify_get()){
         err_code = ble_candata_update(&rcdiy_service, data, len);
         //APP_ERROR_CHECK(err_code);
@@ -492,7 +492,7 @@ ret_code_t bluetooth_start(bool erase_bonds)
     conn_params_init();
     peer_manager_init();
 
-    xTaskCreate(ble_notify_task, "NTF", 1024, NULL, 2, (TaskHandle_t *)&xNotifyTask);
+    xTaskCreate(ble_notify_task, "NTF", 3*1024, NULL, 2, (TaskHandle_t *)&xNotifyTask);
 
     NRF_LOG_INFO("Bluetooth started.");
        
