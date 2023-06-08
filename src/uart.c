@@ -83,6 +83,7 @@ void vTaskGpsParse(void *arg){
         calc_crc = ublox_crc((struct ubx_packet*)&new_msg);
 
         if(crc ==  calc_crc){  
+            //NRF_LOG_INFO("Pkt %04X",new_msg.msgid);
             ubx_parse = ublox_select_func(new_msg.msgid);
             if(ubx_parse != NULL){
                 ubx_parse((uint8_t *)new_msg.payload,new_msg.size);
@@ -93,12 +94,18 @@ void vTaskGpsParse(void *arg){
     }
 }
 
-static void uart_send_data(uint8_t *data, uint32_t len){
+static void uart_send_data(uint8_t *data, uint32_t len, uint8_t wait){
 
     for(uint32_t i=0; i<len; i++){
         uart_tx_data[i] = data[i];
     };
+    
+    //NRF_LOG_INFO("Send pkt %04X",(data[2] << 8)|data[3]);
     nrf_drv_uart_tx(&m_uart, (uint8_t *)uart_tx_data,len);
+
+    if(wait){
+        while(nrf_drv_uart_tx_in_progress(&m_uart)){__NOP();};
+    }
 }
 
 
@@ -111,49 +118,68 @@ void vTaskGps(void *arg){
 
 	/* Очередь команд к GPS приемнику */
 	GpsCmdQ_Handle = xQueueCreate( 30, sizeof(struct ubx_cmd));
-	vTaskDelay(1000); //Задержка, для включения модуля GPS
+    vTaskDelay(1000); //Задержка, для включения модуля GPS
 
-	for(uint32_t i=0; i<(sizeof(uart_speed_list)/sizeof(uart_speed_list[0])); i++){
-		NRF_LOG_INFO("Trying GPS at %d",uart_speed_val[i]);
+    while(!uart_br_found){
+        for(uint32_t i=0; i<(sizeof(uart_speed_list)/sizeof(uart_speed_list[0])); i++){
+            NRF_LOG_INFO("Trying GPS at %d",uart_speed_val[i]);
+            
+            uart_config(uart_speed_list[i]);
+            vTaskDelay(50);
 
-		uart_config(uart_speed_list[i]);
-		uart_send_data((uint8_t *)ubx_poll_ver,sizeof(ubx_poll_ver));
-        vTaskDelay(100);
-        uart_send_data((uint8_t *)ubx_poll_ver,sizeof(ubx_poll_ver));
+            uart_send_data((uint8_t *)ubx_cfg_prt_poll,sizeof(ubx_cfg_prt_poll),1);
 
-        msg_class = ((ubx_poll_ver[2] << 8)|ubx_poll_ver[3]);
-		
-        xResult = xTaskNotifyWait(pdFALSE,     /* Не очищать биты на входе. */
-                            0xffffffff,        /* На выходе очищаются все биты. */
-                            &ulNotifiedValue, /* Здесь хранится значение оповещения. */
-                            pdMS_TO_TICKS(1000));  /* Время таймаута на блокировке. */
+            msg_class = ((ubx_cfg_prt_poll[2] << 8)|ubx_cfg_prt_poll[3]);
+            
+            xResult = xTaskNotifyWait(pdFALSE,     /* Не очищать биты на входе. */
+                                0xffffffff,        /* На выходе очищаются все биты. */
+                                &ulNotifiedValue, /* Здесь хранится значение оповещения. */
+                                pdMS_TO_TICKS(1000));  /* Время таймаута на блокировке. */
 
-        if(xResult == pdTRUE){
-            if(ulNotifiedValue == msg_class){ 
-                NRF_LOG_INFO("GPS baudrate found, %d 0x%04X 0x%04X",uart_speed_val[i],ulNotifiedValue,msg_class);
-                uart_br_found=1;
-                break;
+            if(xResult == pdTRUE){
+                if(ulNotifiedValue == msg_class){ 
+                    NRF_LOG_INFO("GPS baudrate found, %d 0x%04X 0x%04X",uart_speed_val[i],ulNotifiedValue,msg_class);
+                    uart_br_found=1;
+                    break;
+                }else{
+                    NRF_LOG_ERROR("GPS Notify val 0x%0X msg 0x%0X",ulNotifiedValue,msg_class);
+                };
             }else{
-                NRF_LOG_ERROR("GPS Notify val 0x%0X msg 0x%0X",ulNotifiedValue,msg_class);
-            };
-        }else{
-            NRF_LOG_INFO("Timeout gps answer");
+                NRF_LOG_INFO("Timeout gps answer");
+            }
+            
         }
-		
-	}
+        vTaskDelay(2000);
+    }
 
-	if(!uart_br_found){
-		NRF_LOG_ERROR("Can't setup uart baudrate");
-		vTaskSuspend(NULL);
-	}
 
-    while(1);
-
-	NRF_LOG_INFO("Setup new baudrate");
-	uart_send_data((uint8_t *)ubx_cfg_prt_ubx_only_19200,sizeof(ubx_cfg_prt_ubx_only_19200));
-    uart_config(UART_BAUDRATE_BAUDRATE_Baud19200);
+	NRF_LOG_INFO("Setup new baudrate msg");
+	uart_send_data((uint8_t *)ubx_cfg_prt_ubx_only_19200,sizeof(ubx_cfg_prt_ubx_only_19200),1);
     vTaskDelay(100);
-    nrf_drv_uart_tx(&m_uart, (uint8_t *)ubx_poll_ver,sizeof(ubx_poll_ver));
+    
+    NRF_LOG_INFO("Setup new baudrate cfg");
+    uart_config(UART_BAUDRATE_BAUDRATE_Baud19200);
+    
+    vTaskDelay(100);
+
+    //Clean all notifycations
+    while(xTaskNotifyWait(pdFALSE, 0xffffffff, &ulNotifiedValue, pdMS_TO_TICKS(0)) == pdTRUE){__NOP();}
+    
+    
+    for(uint32_t i=0; i<10; i++){
+        NRF_LOG_INFO("Waiting ACK %d",i);
+        uart_send_data((uint8_t *)ubx_cfg_prt_poll,sizeof(ubx_cfg_prt_poll),1);
+        
+        xResult = xTaskNotifyWait(pdFALSE, 0xffffffff, &ulNotifiedValue, pdMS_TO_TICKS(300));
+        msg_class = ((ubx_cfg_prt_poll[2] << 8)|ubx_cfg_prt_poll[3]);
+        
+        if(xResult == pdTRUE){
+            if(ulNotifiedValue == msg_class){
+                NRF_LOG_INFO("Get ACK, uart ready");
+                break;
+            }
+        }
+    }
 
 
 	//Отключить сообщение одометра
@@ -202,7 +228,7 @@ void vTaskGps(void *arg){
 	while(1){
 		if(xQueuePeek(GpsCmdQ_Handle,&cmd,portMAX_DELAY)){  //Получить команду, но не убирать из очереди
 			msg_class = ((cmd.cmd[2] << 8)|cmd.cmd[3]);
-			uart_send_data(cmd.cmd,cmd.size);
+			uart_send_data(cmd.cmd,cmd.size,1);
 
 			//Ждать 2 секунды выставления флагов. Флаг выставляется
 			//при приеме ACK пакета в значение MSG_ID
@@ -221,7 +247,6 @@ void vTaskGps(void *arg){
                 NRF_LOG_INFO("GPS cmd timeout %0X",msg_class);
             }
 		};
-//        vTaskDelay(1000);
 	}	
 
 }
@@ -229,7 +254,7 @@ void vTaskGps(void *arg){
 
 static void uart_config(uint32_t speed){
     uint32_t err_code;
-    uint8_t data;
+    uint8_t uart_data;
 
     nrf_drv_uart_uninit(&m_uart);
 
@@ -249,12 +274,12 @@ static void uart_config(uint32_t speed){
         NRF_LOG_INFO("UART Init done");
     }
 
-    err_code = nrf_drv_uart_rx(&m_uart, &data,1);
-    if(err_code != NRF_SUCCESS){
-        NRF_LOG_ERROR("UART RX ERROR: %d",err_code);
-    }else{
-        NRF_LOG_INFO("UART RX done");
-    }
+    nrf_drv_uart_rx(&m_uart, &uart_data, 1);
+
+    for(uint32_t i = 0; i < 6; i++){
+        nrf_uart_rxd_get(m_uart.uart.p_reg);
+    }        
+        
 }
 
 void uart_init(void){

@@ -3,6 +3,7 @@
 #include "nrf.h"
 #include "nrf_log.h"
 #include "nrf_drv_common.h"
+#include "nrf_gpio.h"
 #include "nrf_drv_uart.h"
 
 #include "FreeRTOS.h"
@@ -14,6 +15,8 @@
 
 //#define USE_APP_UART
 #define USE_NATIVE_UART
+
+//#define UART_PIN 5
 
 #define RX_PIN 15
 #define TX_PIN 26
