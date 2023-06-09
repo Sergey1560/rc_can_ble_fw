@@ -90,7 +90,7 @@ void vTaskGpsParse(void *arg){
                 ubx_parse((uint8_t *)new_msg.payload,new_msg.size);
             }
         }else{
-            NRF_LOG_ERROR("Calc FAIL ID: %04X Len: %d CRC: %0X Packet CRC: %0X",new_msg.msgid,new_msg.size,calc_crc,crc);
+            //NRF_LOG_ERROR("Calc FAIL ID: %04X Len: %d CRC: %0X Packet CRC: %0X",new_msg.msgid,new_msg.size,calc_crc,crc);
         }
     }
 }
@@ -258,6 +258,7 @@ static void uart_config(uint32_t speed){
     uint8_t uart_data;
 
     nrf_drv_uart_uninit(&m_uart);
+    vTaskDelay(100);
 
     nrf_drv_uart_config_t uart_config = NRF_DRV_UART_DEFAULT_CONFIG;
     uart_config.baudrate = speed;

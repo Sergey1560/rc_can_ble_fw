@@ -5,6 +5,69 @@ volatile struct ublox_gps_data_t ublox_data;
 volatile struct ubx_packet ALGN32 new_msg;
 volatile uint8_t ALGN32 ubx_msg[UBX_MSG_MAX_LEN];
 
+
+void ublox_pack_data(uint8_t *main_data, uint8_t *time_data){
+	static int date_prev = 0;
+	static uint8_t sync = 0;
+
+	//Sync bits* (3 bits) and hour and date (21 bits = (year - 2000) * 8928 + (month - 1) * 744 + (day - 1) * 24 + hour)
+	int dateAndHour = ((ublox_data.nav_pvt.year-2000) * 8928) + ((ublox_data.nav_pvt.month-1) * 744) + ((ublox_data.nav_pvt.day-1) * 24) + ublox_data.nav_pvt.hour;
+
+	if(dateAndHour != date_prev){
+		sync++;
+		if(sync > 7){
+			sync = 0;
+		}
+		date_prev = dateAndHour;
+	}
+
+	time_data[0] = ((sync & 0x7) << 5) | ((dateAndHour >> 16) & 0x1F);
+	time_data[1] = dateAndHour >> 8;
+	time_data[2] = dateAndHour;
+
+
+	//Sync bits* (3 bits) and time from hour start (21 bits = (minute * 30000) + (seconds * 500) + (milliseconds / 2))
+	int timeSinceHourStart = (ublox_data.nav_pvt.minute * 30000) + (ublox_data.nav_pvt.second * 500) + (ublox_data.nav_pvt.nano / 2);
+
+ 	main_data[0] = ((sync & 0x7) << 5) | ((timeSinceHourStart >> 16) & 0x1F);
+    main_data[1] = timeSinceHourStart >> 8;
+    main_data[2] = timeSinceHourStart;
+
+	main_data[3] = (ublox_data.nav_pvt.numSV & 0x3F) | ((ublox_data.nav_pvt.fixtype & 3) << 6); 
+
+	main_data[4] = (ublox_data.nav_pvt.latitude >> 24) & 0xFF;
+	main_data[5] = (ublox_data.nav_pvt.latitude >> 16) & 0xFF;
+	main_data[6] = (ublox_data.nav_pvt.latitude >> 8) & 0xFF;
+	main_data[7] = (ublox_data.nav_pvt.latitude) & 0xFF;
+
+	main_data[8] = (ublox_data.nav_pvt.longitude >> 24) & 0xFF;
+	main_data[9] = (ublox_data.nav_pvt.longitude >> 16) & 0xFF;
+	main_data[10] = (ublox_data.nav_pvt.longitude >> 8) & 0xFF;
+	main_data[11] = (ublox_data.nav_pvt.longitude) & 0xFF;
+
+	//(((meters + 500) * 10) & 0x7FFF)
+	uint16_t altitude = ((ublox_data.nav_pvt.hMSL/1000)+500) * 10;
+	altitude = altitude & 0x7FFF;
+	main_data[12] = (altitude >> 8) & 0xFF;
+	main_data[13] = (altitude) & 0xFF;
+
+	//14-15	Speed in ((km/h * 100) & 0x7FFF) or (((km/h * 10) & 0x7FFF) | 0x8000), invalid value 0xFFFF. ***
+	uint16_t speed = (ublox_data.nav_pvt.speed * 100) & 0x7FFF;
+	main_data[14] = (speed >> 8) & 0xFF;
+	main_data[15] = (speed ) & 0xFF;
+
+	//16-17	Bearing (degrees * 100), invalid value 0xFFFF
+	int32_t heading = ublox_data.nav_pvt.head / 1000;
+	main_data[16] = (heading >> 8) & 0xFF;
+	main_data[17] = (heading) & 0xFF;
+
+	//18	HDOP (dop * 10), invalid value 0xFF
+	main_data[18] = ublox_data.nav_pvt.pdop / 10;
+	//19	VDOP (dop * 10), invalid value 0xFF
+	main_data[19] = ublox_data.nav_pvt.pdop / 10;
+}
+
+
 void* ublox_select_func(uint16_t msg_id){
 	void (*ubx_parse) (uint8_t *msg, uint8_t len);
 
@@ -242,6 +305,8 @@ void ublox_parse_pvt(uint8_t *msg, uint8_t len){
 	ublox_data.nav_pvt.head = ubx_navpvt->headMot;
 	ublox_data.nav_pvt.hAcc = ubx_navpvt->hAcc;
 	ublox_data.nav_pvt.magDec = ubx_navpvt->madDec;
+
+	ublox_data.nav_pvt.pdop = ubx_navpvt->pDOP;
 
 	ublox_data.gps_update_count++;
 

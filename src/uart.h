@@ -18,8 +18,8 @@
 
 //#define UART_PIN 5
 
-#define RX_PIN 15
-#define TX_PIN 26
+#define RX_PIN 26
+#define TX_PIN 15
 
 extern volatile TaskHandle_t xGpsParse;
 extern volatile TaskHandle_t xGpsTask;
