@@ -23,10 +23,32 @@
 
 #define CAN_MAIN_UUID                   0x0001
 #define CAN_MAIN_UUID_LEN               12 // 4 extID + 8 data
-#define CAN_MAIN_DATA_INTERVAL          2000
 
 #define CAN_FILTER_UUID                 0x0002
-#define CAN_FILTER_UUID_LEN             8 // 4 extID + 8 data
+#define CAN_FILTER_UUID_LEN             8 
+
+#define GPS_MAIN_UUID                   0x0003
+#define GPS_MAIN_UUID_LEN               20
+
+#define GPS_TIME_UUID                   0x0004
+#define GPS_TIME_UUID_LEN               3 
+
+#define NOTIFY_DATA_INTERVAL            1000
+
+
+struct notification_enabled_t{
+    uint8_t can_main;
+    uint8_t gps_main;
+    uint8_t gps_time;
+};
+
+enum CHAR_ID_t{
+    ALL_CHARS_ID,
+    CAN_MAIN_ID,
+    GPS_MAIN_ID,
+    GPS_TIME_ID
+};
+
 
 typedef enum
 {
@@ -40,6 +62,7 @@ typedef enum
 /**@brief Custom Service event. */
 typedef struct
 {
+    uint16_t           char_handle;
     ble_cus_evt_type_t evt_type;                                  /**< Type of event. */
 } ble_cus_evt_t;
 
@@ -66,6 +89,8 @@ struct ble_cus_s
     uint16_t                      service_handle;                 /**< Handle of Custom Service (as provided by the BLE stack). */
     ble_gatts_char_handles_t      can_main_handles;               /**< Handles related to the Custom Value characteristic. */
     ble_gatts_char_handles_t      can_filter_handles;             /**< Handles related to the Custom Value characteristic. */
+    ble_gatts_char_handles_t      gps_main_handles;             /**< Handles related to the Custom Value characteristic. */
+    ble_gatts_char_handles_t      gps_time_handles;             /**< Handles related to the Custom Value characteristic. */
     uint16_t                      conn_handle;                    /**< Handle of the current connection (as provided by the BLE stack, is BLE_CONN_HANDLE_INVALID if not in a connection). */
     uint8_t                       uuid_type; 
 };
@@ -95,10 +120,13 @@ NRF_SDH_BLE_OBSERVER(_name ## _obs,                                             
  */
 uint32_t ble_cus_init(ble_cus_t * p_cus, const ble_cus_init_t * p_cus_init);
 void ble_cus_on_ble_evt( ble_evt_t const * p_ble_evt, void * p_context);
-uint32_t ble_candata_update(ble_cus_t * p_cus, uint8_t *data, uint32_t len);
-//void notification_timeout_handler(TimerHandle_t xTimer);
+
+uint32_t ble_data_update(ble_cus_t * p_cus, uint8_t char_id, uint8_t *data, uint32_t len);
+
 void ble_notify_task(void *p);
-void notify_set(uint32_t flag);
-uint32_t notify_get(void);
+
+void notify_set(uint8_t flag, enum CHAR_ID_t char_id);
+uint32_t notify_get(enum CHAR_ID_t char_id);
+int8_t handle_to_id(ble_cus_t * p_cus, ble_cus_evt_t *evt);
 
 #endif

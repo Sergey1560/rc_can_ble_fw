@@ -40,15 +40,41 @@ uint32_t update_can_data(uint8_t *data, uint32_t len){
     ret_code_t err_code = NRF_SUCCESS;
 
     rc_led_candata_invert();
-    NRF_LOG_INFO("Update");
-    if(notify_get()){
-        err_code = ble_candata_update(&rcdiy_service, data, len);
+    //NRF_LOG_INFO("Update");
+    if(notify_get(CAN_MAIN_ID)){
+        err_code = ble_data_update(&rcdiy_service, CAN_MAIN_ID, data, len);
         //APP_ERROR_CHECK(err_code);
         if(err_code != NRF_SUCCESS){
-            NRF_LOG_ERROR("Error %d",err_code);
+            NRF_LOG_ERROR("Can update error %d",err_code);
         }
     }
 
+    return err_code;
+};
+
+
+uint32_t update_gps_main_data(uint8_t *data, uint32_t len){
+    ret_code_t err_code = NRF_SUCCESS;
+
+    //NRF_LOG_INFO("Update");
+    if(notify_get(GPS_MAIN_ID)){
+        err_code = ble_data_update(&rcdiy_service, GPS_MAIN_ID, data, len);
+        if(err_code != NRF_SUCCESS){
+            NRF_LOG_ERROR("GPS Main update error %d",err_code);
+        }
+    }
+    return err_code;
+};
+
+uint32_t update_gps_time_data(uint8_t *data, uint32_t len){
+    ret_code_t err_code = NRF_SUCCESS;
+
+    if(notify_get(GPS_TIME_ID)){
+        err_code = ble_data_update(&rcdiy_service, GPS_TIME_ID, data, len);
+        if(err_code != NRF_SUCCESS){
+            NRF_LOG_ERROR("GPS TIME update error %d",err_code);
+        }
+    }
     return err_code;
 };
 
@@ -127,7 +153,7 @@ static void ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
     switch (p_ble_evt->header.evt_id)
     {
         case BLE_GAP_EVT_DISCONNECTED:
-            notify_set(0);
+            notify_set(0,0);
             NRF_LOG_INFO("Disconnected.");
             rc_led_connection(0);
             rc_led_candata(0);
@@ -172,6 +198,11 @@ static void ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
             APP_ERROR_CHECK(err_code);
             break;
 
+        case BLE_GATTS_EVT_HVN_TX_COMPLETE:
+            NRF_LOG_INFO("Send complete");
+            break;
+
+
         default:
             // No implementation needed.
             break;
@@ -189,20 +220,48 @@ static void ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
  */
 static void on_cus_evt(ble_cus_t  *p_cus_service, ble_cus_evt_t * p_evt)
 {
-    switch(p_evt->evt_type)
+    uint8_t char_id;
+
+//    NRF_LOG_INFO("Service: %d CAN: %d F: %d GPS: %d Time: %d",p_evt->char_handle,p_cus_service->can_main_handles.value_handle,p_cus_service->can_filter_handles.value_handle,p_cus_service->gps_main_handles.value_handle,p_cus_service->gps_time_handles.value_handle);
+
+    char_id = handle_to_id(p_cus_service,p_evt);
+
+    switch (char_id)
     {
+    case CAN_MAIN_ID:
+        NRF_LOG_INFO("CAN MAIN ");
+        break;
+
+    case GPS_MAIN_ID:
+        NRF_LOG_INFO("GPS MAIN ");
+        break;
+    
+    case GPS_TIME_ID:
+        NRF_LOG_INFO("GPS TIME ");
+        break;
+
+    default:
+        NRF_LOG_INFO("DEFAULT");
+
+        break;
+    }
+
+
+    switch(p_evt->evt_type){
 
         case BLE_CUS_EVT_NOTIFICATION_ENABLED:
-            NRF_LOG_INFO("Enable notify");
-            notify_set(1);
+            NRF_LOG_INFO("Enable notify ID %d",char_id);
+            notify_set(1,char_id);
+
             if(xNotifyTask != NULL){
                 vTaskResume(xNotifyTask);
             }
+            
             break;
 
         case BLE_CUS_EVT_NOTIFICATION_DISABLED:
-            NRF_LOG_INFO("Disable notify");
-            notify_set(0);
+            NRF_LOG_INFO("Disable notify ID %d",char_id);
+            notify_set(0,char_id);
             break;
 
         case BLE_CUS_EVT_CONNECTED:
@@ -360,6 +419,13 @@ static void ble_stack_init(void)
     err_code = nrf_sdh_ble_default_cfg_set(APP_BLE_CONN_CFG_TAG, &ram_start);
     APP_ERROR_CHECK(err_code);
 
+    // ble_cfg_t ble_cfg;
+    // memset(&ble_cfg, 0, sizeof(ble_cfg));
+    // ble_cfg.conn_cfg.conn_cfg_tag = APP_BLE_CONN_CFG_TAG;
+    // ble_cfg.conn_cfg.params.gatts_conn_cfg.hvn_tx_queue_size = 4;
+    // err_code = sd_ble_cfg_set(BLE_CONN_CFG_GATTS, &ble_cfg, ram_start);
+    // APP_ERROR_CHECK(err_code);
+
     // Enable BLE stack.
     err_code = nrf_sdh_ble_enable(&ram_start);
     APP_ERROR_CHECK(err_code);
@@ -492,7 +558,7 @@ ret_code_t bluetooth_start(bool erase_bonds)
     conn_params_init();
     peer_manager_init();
 
-    xTaskCreate(ble_notify_task, "NTF", 3*1024, NULL, 2, (TaskHandle_t *)&xNotifyTask);
+    xTaskCreate(ble_notify_task, "Can_NTF", 3*1024, NULL, 2, (TaskHandle_t *)&xNotifyTask);
 
     NRF_LOG_INFO("Bluetooth started.");
        

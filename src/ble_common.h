@@ -37,7 +37,7 @@
 
 #define DEVICE_NAME                     "CAN_BLE"                               /**< Name of device. Will be included in the advertising data. */
 #define MANUFACTURER_NAME               "RogaAndKopyta"                         /**< Manufacturer. Will be passed to Device Information Service. */
-#define APP_ADV_INTERVAL                300                                     /**< The advertising interval (in units of 0.625 ms. This value corresponds to 187.5 ms). */
+#define APP_ADV_INTERVAL                160                                     /**< The advertising interval (in units of 0.625 ms. This value corresponds to 187.5 ms). */
 
 #define APP_ADV_DURATION                18000                                   /**< The advertising duration (180 seconds) in units of 10 milliseconds. */
 #define APP_BLE_OBSERVER_PRIO           3                                       /**< Application's BLE observer priority. You shouldn't need to modify this value. */
@@ -68,5 +68,7 @@ extern TaskHandle_t xNotifyTask;
 
 ret_code_t bluetooth_start(bool erase_bonds);
 uint32_t update_can_data(uint8_t *data, uint32_t len);
+uint32_t update_gps_main_data(uint8_t *data, uint32_t len);
+uint32_t update_gps_time_data(uint8_t *data, uint32_t len);
 
 #endif

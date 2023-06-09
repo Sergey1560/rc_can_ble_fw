@@ -7,41 +7,127 @@
 #include "nrf_log.h"
 #include "mcp2515.h"
 #include "can_abit.h"
+#include "ublox.h"
 
 volatile uint8_t __attribute__ ((aligned (4))) can_main_data[CAN_MAIN_UUID_LEN];
 volatile uint8_t __attribute__ ((aligned (4))) can_filter_data[CAN_FILTER_UUID_LEN];
 volatile uint8_t __attribute__ ((aligned (4))) can_data[CAN_MAIN_UUID_LEN] = {0};
+volatile uint8_t __attribute__ ((aligned (4))) gps_main_data[GPS_MAIN_UUID_LEN] = {0};
+volatile uint8_t __attribute__ ((aligned (4))) gps_time_data[GPS_TIME_UUID_LEN] = {0};
 
-volatile uint32_t notification_enabled = 0;
+volatile struct notification_enabled_t notification_enabled = {.can_main=0,.gps_main=0,.gps_time=0};
 
-void notify_set(uint32_t flag){
-    NRF_LOG_INFO("Set notify %d",flag);
+void notify_set(uint8_t flag, enum CHAR_ID_t char_id){
+    NRF_LOG_INFO("Set notify %d for %d",flag,char_id);
     if(flag > 0){
-        notification_enabled = 1;
-    }else{
-        notification_enabled = 0;
+        flag = 1;
     }
+
+    switch (char_id)
+    {
+    case 1:
+        //All chars
+        notification_enabled.can_main = flag;
+        break;
+
+    case 2:
+        //All chars
+        notification_enabled.gps_main = flag;
+        break;
+
+    case 3:
+        //All chars
+        notification_enabled.gps_time = flag;
+        break;
+
+    default:
+        NRF_LOG_INFO("Default value, disable all");
+        notification_enabled.can_main = 0;
+        notification_enabled.gps_main = 0;
+        notification_enabled.gps_time = 0;
+        break;
+    }
+
 }
 
-uint32_t notify_get(void){
-    return notification_enabled;
+uint32_t notify_get(enum CHAR_ID_t char_id){
+    uint32_t ret_val;
+
+    switch (char_id)
+    {
+    case CAN_MAIN_ID:
+        ret_val = notification_enabled.can_main;
+        break;
+
+    case GPS_MAIN_ID:
+        ret_val = notification_enabled.gps_main;
+        break;
+
+    case GPS_TIME_ID:
+        ret_val = notification_enabled.gps_time;
+        break;
+
+    default:
+        ret_val =notification_enabled.can_main | notification_enabled.gps_main | notification_enabled.gps_time;
+        break;
+    }
+
+    return ret_val;
 }
 
+int8_t handle_to_id(ble_cus_t * p_cus, ble_cus_evt_t *evt){
+
+    if(evt->char_handle == p_cus->can_main_handles.cccd_handle){
+        return CAN_MAIN_ID;
+    }
+    
+    if(evt->char_handle == p_cus->gps_main_handles.cccd_handle){
+        return GPS_MAIN_ID;
+    }
+
+    if(evt->char_handle == p_cus->gps_time_handles.cccd_handle){
+        return GPS_TIME_ID;
+    }
+
+
+    return -1;
+}
 
 void ble_notify_task(void *p){
+    uint32_t gps_time_value = 0;
 
     while(1){
-
-        if(notification_enabled == 0){
-            NRF_LOG_INFO("Suspend Task");
+        if((notification_enabled.gps_main == 0) && (notification_enabled.gps_time == 0) && (notification_enabled.can_main == 0)){
+            NRF_LOG_INFO("Suspend notify Task");
             vTaskSuspend(NULL);
+        }else{
+            
+            ublox_pack_data((uint8_t *)gps_main_data,(uint8_t *)gps_time_data);
+            
+            if(notification_enabled.can_main){
+                adlm_pack_data((uint8_t *)can_data);
+                update_can_data((uint8_t *)can_data, CAN_MAIN_UUID_LEN);
+            }
+
+            if(notification_enabled.gps_time){
+                uint32_t time = (gps_time_data[0] << 16)|(gps_time_data[1] << 8)|gps_time_data[2];
+                if(gps_time_value != time){
+                    update_gps_time_data((uint8_t *)gps_time_data,GPS_TIME_UUID_LEN);
+                    gps_time_value = time;
+                }
+            };
+
+            if(notification_enabled.gps_main){
+                update_gps_main_data((uint8_t *)gps_main_data,GPS_MAIN_UUID_LEN);
+                
+            };
+
+            vTaskDelay(NOTIFY_DATA_INTERVAL);
         }
-
-        adlm_pack_data((uint8_t *)can_data);
-        update_can_data((uint8_t *)can_data, CAN_MAIN_UUID_LEN);
-
-        vTaskDelay(CAN_MAIN_DATA_INTERVAL);
     }
+
+
+
 }
 
 /**@brief Function for handling the Connect event.
@@ -56,6 +142,7 @@ static void on_connect(ble_cus_t * p_cus, ble_evt_t const * p_ble_evt)
     ble_cus_evt_t evt;
 
     evt.evt_type = BLE_CUS_EVT_CONNECTED;
+    evt.char_handle = 0; 
 
     p_cus->evt_handler(p_cus, &evt);
 }
@@ -111,31 +198,56 @@ static void on_write(ble_cus_t * p_cus, ble_evt_t const * p_ble_evt)
     NRF_LOG_INFO("On write. PEW_H: %0X",p_evt_write->handle);
 
     // Check if the handle passed with the event matches the Custom Value Characteristic handle.
-    if (p_evt_write->handle == p_cus->can_filter_handles.value_handle)
-    {
+    if (p_evt_write->handle == p_cus->can_filter_handles.value_handle){
         NRF_LOG_INFO("FILTER Write event. Len: %d Data0: %d",p_evt_write->len,p_evt_write->data[0]);
     }
 
     // Check if the Custom value CCCD is written to and that the value is the appropriate length, i.e 2 bytes.
-    if ((p_evt_write->handle == p_cus->can_main_handles.cccd_handle) && (p_evt_write->len == 2))
-    {
+    if ((p_evt_write->handle == p_cus->can_main_handles.cccd_handle) && (p_evt_write->len == 2)){
         NRF_LOG_INFO("MAIN Write event.");
-        if (p_cus->evt_handler != NULL)
-        {
+        if (p_cus->evt_handler != NULL){
             ble_cus_evt_t evt;
 
-            if (ble_srv_is_notification_enabled(p_evt_write->data))
-            {
+            if (ble_srv_is_notification_enabled(p_evt_write->data)){
                 evt.evt_type = BLE_CUS_EVT_NOTIFICATION_ENABLED;
-            }
-            else
-            {
+            }else{
                 evt.evt_type = BLE_CUS_EVT_NOTIFICATION_DISABLED;
             }
-            // Call the application event handler.
+            evt.char_handle = p_evt_write->handle;
             p_cus->evt_handler(p_cus, &evt);
         }
     }
+
+    if ((p_evt_write->handle == p_cus->gps_main_handles.cccd_handle) && (p_evt_write->len == 2)){
+        NRF_LOG_INFO("GPS main Write event.");
+        if (p_cus->evt_handler != NULL){
+            ble_cus_evt_t evt;
+
+            if (ble_srv_is_notification_enabled(p_evt_write->data)){
+                evt.evt_type = BLE_CUS_EVT_NOTIFICATION_ENABLED;
+            }else{
+                evt.evt_type = BLE_CUS_EVT_NOTIFICATION_DISABLED;
+            }
+            evt.char_handle = p_evt_write->handle;
+            p_cus->evt_handler(p_cus, &evt);
+        }
+    }
+
+    if ((p_evt_write->handle == p_cus->gps_time_handles.cccd_handle) && (p_evt_write->len == 2)){
+        NRF_LOG_INFO("GPS time Write event.");
+        if (p_cus->evt_handler != NULL){
+            ble_cus_evt_t evt;
+
+            if (ble_srv_is_notification_enabled(p_evt_write->data)){
+                evt.evt_type = BLE_CUS_EVT_NOTIFICATION_ENABLED;
+            }else{
+                evt.evt_type = BLE_CUS_EVT_NOTIFICATION_DISABLED;
+            }
+            evt.char_handle = p_evt_write->handle;
+            p_cus->evt_handler(p_cus, &evt);
+        }
+    }
+
 
 }
 
@@ -248,6 +360,115 @@ static uint32_t can_filter_char_add(ble_cus_t * p_cus)
     return err_code;
 }
 
+
+
+static uint32_t gps_main_char_add(ble_cus_t * p_cus)
+{
+    uint32_t            err_code;
+    ble_gatts_char_md_t char_md;
+    ble_gatts_attr_md_t cccd_md;
+    ble_gatts_attr_t    attr_char_value;
+    ble_uuid_t          ble_uuid;
+    ble_gatts_attr_md_t attr_md;
+
+    memset(&cccd_md, 0, sizeof(cccd_md));
+
+    //  Read  operation on Cccd should be possible without authentication.
+    BLE_GAP_CONN_SEC_MODE_SET_OPEN(&cccd_md.read_perm);
+    BLE_GAP_CONN_SEC_MODE_SET_OPEN(&cccd_md.write_perm);
+    
+    cccd_md.vloc       = BLE_GATTS_VLOC_STACK;
+
+    memset(&char_md, 0, sizeof(char_md));
+
+    char_md.char_props.read   = 1;
+    char_md.char_props.write  = 0;
+    char_md.char_props.notify = 1; 
+    char_md.p_char_user_desc  = NULL;
+    char_md.p_char_pf         = NULL;
+    char_md.p_user_desc_md    = NULL;
+    char_md.p_cccd_md         = &cccd_md;
+    char_md.p_sccd_md         = NULL;
+
+    memset(&attr_md, 0, sizeof(attr_md));
+
+    BLE_GAP_CONN_SEC_MODE_SET_OPEN(&attr_md.write_perm);
+    BLE_GAP_CONN_SEC_MODE_SET_OPEN(&attr_md.read_perm);
+    attr_md.vloc       = BLE_GATTS_VLOC_USER;
+    attr_md.rd_auth    = 0;
+    attr_md.wr_auth    = 0;
+    attr_md.vlen       = 0;
+
+    ble_uuid.type = p_cus->uuid_type;
+    ble_uuid.uuid = GPS_MAIN_UUID;
+
+    memset(&attr_char_value, 0, sizeof(attr_char_value));
+
+    attr_char_value.p_uuid    = &ble_uuid;
+    attr_char_value.p_attr_md = &attr_md;
+    attr_char_value.init_len  = GPS_MAIN_UUID_LEN;
+    attr_char_value.init_offs = 0;
+    attr_char_value.max_len   = GPS_MAIN_UUID_LEN;
+    attr_char_value.p_value   = (uint8_t *)gps_main_data;
+
+    err_code = sd_ble_gatts_characteristic_add(p_cus->service_handle, &char_md, &attr_char_value,  &p_cus->gps_main_handles);
+    return err_code;
+}
+
+static uint32_t gps_time_char_add(ble_cus_t * p_cus)
+{
+    uint32_t            err_code;
+    ble_gatts_char_md_t char_md;
+    ble_gatts_attr_md_t cccd_md;
+    ble_gatts_attr_t    attr_char_value;
+    ble_uuid_t          ble_uuid;
+    ble_gatts_attr_md_t attr_md;
+
+    memset(&cccd_md, 0, sizeof(cccd_md));
+
+    //  Read  operation on Cccd should be possible without authentication.
+    BLE_GAP_CONN_SEC_MODE_SET_OPEN(&cccd_md.read_perm);
+    BLE_GAP_CONN_SEC_MODE_SET_OPEN(&cccd_md.write_perm);
+    
+    cccd_md.vloc       = BLE_GATTS_VLOC_STACK;
+
+    memset(&char_md, 0, sizeof(char_md));
+
+    char_md.char_props.read   = 1;
+    char_md.char_props.write  = 0;
+    char_md.char_props.notify = 1; 
+    char_md.p_char_user_desc  = NULL;
+    char_md.p_char_pf         = NULL;
+    char_md.p_user_desc_md    = NULL;
+    char_md.p_cccd_md         = &cccd_md;
+    char_md.p_sccd_md         = NULL;
+
+    memset(&attr_md, 0, sizeof(attr_md));
+
+    BLE_GAP_CONN_SEC_MODE_SET_OPEN(&attr_md.write_perm);
+    BLE_GAP_CONN_SEC_MODE_SET_OPEN(&attr_md.read_perm);
+    attr_md.vloc       = BLE_GATTS_VLOC_USER;
+    attr_md.rd_auth    = 0;
+    attr_md.wr_auth    = 0;
+    attr_md.vlen       = 0;
+
+    ble_uuid.type = p_cus->uuid_type;
+    ble_uuid.uuid = GPS_TIME_UUID;
+
+    memset(&attr_char_value, 0, sizeof(attr_char_value));
+
+    attr_char_value.p_uuid    = &ble_uuid;
+    attr_char_value.p_attr_md = &attr_md;
+    attr_char_value.init_len  = GPS_TIME_UUID_LEN;
+    attr_char_value.init_offs = 0;
+    attr_char_value.max_len   = GPS_TIME_UUID_LEN;
+    attr_char_value.p_value   = (uint8_t *)gps_main_data;
+
+    err_code = sd_ble_gatts_characteristic_add(p_cus->service_handle, &char_md, &attr_char_value,  &p_cus->gps_time_handles);
+    return err_code;
+}
+
+
 uint32_t ble_cus_init(ble_cus_t * p_cus, const ble_cus_init_t * p_cus_init)
 {
     if (p_cus == NULL || p_cus_init == NULL)
@@ -261,7 +482,6 @@ uint32_t ble_cus_init(ble_cus_t * p_cus, const ble_cus_init_t * p_cus_init)
     // Initialize service structure
     p_cus->conn_handle = BLE_CONN_HANDLE_INVALID;
     p_cus->evt_handler = p_cus_init->evt_handler;
-    p_cus->conn_handle = BLE_CONN_HANDLE_INVALID;
 
     // Add Custom Service UUID
     ble_uuid128_t base_uuid = {RCDIY_SERVICE_UUID_BASE};
@@ -281,15 +501,21 @@ uint32_t ble_cus_init(ble_cus_t * p_cus, const ble_cus_init_t * p_cus_init)
 
     // Add Custom Value characteristic
     err_code = can_main_char_add(p_cus);
-
-
-    if (err_code != NRF_SUCCESS)
-    {
+    if (err_code != NRF_SUCCESS){
         return err_code;
     }
     
-    
     err_code = can_filter_char_add(p_cus);
+    if (err_code != NRF_SUCCESS){
+        return err_code;
+    }
+
+    err_code = gps_main_char_add(p_cus);
+    if (err_code != NRF_SUCCESS){
+        return err_code;
+    }
+
+    err_code = gps_time_char_add(p_cus);
 
     return err_code;
 }
@@ -348,15 +574,36 @@ void ble_cus_on_ble_evt( ble_evt_t const * p_ble_evt, void * p_context)
     }
 }
 
-uint32_t ble_candata_update(ble_cus_t * p_cus, uint8_t *data, uint32_t len)
-{
-    //NRF_LOG_INFO("ble_candata_update"); 
+uint32_t ble_data_update(ble_cus_t * p_cus, uint8_t char_id, uint8_t *data, uint32_t len){
+
     if (p_cus == NULL){
         return NRF_ERROR_NULL;
     }
 
     uint32_t err_code = NRF_SUCCESS;
     ble_gatts_value_t gatts_value;
+    uint16_t value_handle;
+
+    switch (char_id)
+    {
+    case CAN_MAIN_ID:
+        value_handle = p_cus->can_main_handles.value_handle;
+        break;
+
+    case GPS_MAIN_ID:
+        value_handle = p_cus->gps_main_handles.value_handle;
+        break;
+
+    case GPS_TIME_ID:
+        value_handle = p_cus->gps_time_handles.value_handle;
+        break;
+
+    default:
+        return NRF_ERROR_NULL;
+        break;
+    }
+
+
 
     // Initialize value struct.
     memset(&gatts_value, 0, sizeof(gatts_value));
@@ -366,7 +613,7 @@ uint32_t ble_candata_update(ble_cus_t * p_cus, uint8_t *data, uint32_t len)
     gatts_value.p_value = data;
 
     // Update database.
-    err_code = sd_ble_gatts_value_set(p_cus->conn_handle, p_cus->can_main_handles.value_handle, &gatts_value);
+    err_code = sd_ble_gatts_value_set(p_cus->conn_handle, value_handle, &gatts_value);
     if (err_code != NRF_SUCCESS)
     {
         return err_code;
@@ -379,7 +626,7 @@ uint32_t ble_candata_update(ble_cus_t * p_cus, uint8_t *data, uint32_t len)
 
         memset(&hvx_params, 0, sizeof(hvx_params));
 
-        hvx_params.handle = p_cus->can_main_handles.value_handle;
+        hvx_params.handle = value_handle;
         hvx_params.type   = BLE_GATT_HVX_NOTIFICATION;
         hvx_params.offset = gatts_value.offset;
         hvx_params.p_len  = &gatts_value.len;
