@@ -39,16 +39,10 @@ static void pm_evt_handler(pm_evt_t const * p_evt);
 uint32_t update_can_data(uint8_t *data, uint32_t len){
     ret_code_t err_code = NRF_SUCCESS;
 
-    rc_led_candata_invert();
-    //NRF_LOG_INFO("Update");
-    if(notify_get(CAN_MAIN_ID)){
-        err_code = ble_data_update(&rcdiy_service, CAN_MAIN_ID, data, len);
-        //APP_ERROR_CHECK(err_code);
-        if(err_code != NRF_SUCCESS){
-            NRF_LOG_ERROR("Can update error %d",err_code);
-        }
+    err_code = ble_data_update(&rcdiy_service, CAN_MAIN_ID, data, len);
+    if(err_code != NRF_SUCCESS){
+        NRF_LOG_ERROR("Can update error %d",err_code);
     }
-
     return err_code;
 };
 
@@ -56,12 +50,9 @@ uint32_t update_can_data(uint8_t *data, uint32_t len){
 uint32_t update_gps_main_data(uint8_t *data, uint32_t len){
     ret_code_t err_code = NRF_SUCCESS;
 
-    //NRF_LOG_INFO("Update");
-    if(notify_get(GPS_MAIN_ID)){
-        err_code = ble_data_update(&rcdiy_service, GPS_MAIN_ID, data, len);
-        if(err_code != NRF_SUCCESS){
-            NRF_LOG_ERROR("GPS Main update error %d",err_code);
-        }
+    err_code = ble_data_update(&rcdiy_service, GPS_MAIN_ID, data, len);
+    if(err_code != NRF_SUCCESS){
+        NRF_LOG_ERROR("GPS Main update error %d",err_code);
     }
     return err_code;
 };
@@ -69,11 +60,9 @@ uint32_t update_gps_main_data(uint8_t *data, uint32_t len){
 uint32_t update_gps_time_data(uint8_t *data, uint32_t len){
     ret_code_t err_code = NRF_SUCCESS;
 
-    if(notify_get(GPS_TIME_ID)){
-        err_code = ble_data_update(&rcdiy_service, GPS_TIME_ID, data, len);
-        if(err_code != NRF_SUCCESS){
-            NRF_LOG_ERROR("GPS TIME update error %d",err_code);
-        }
+    err_code = ble_data_update(&rcdiy_service, GPS_TIME_ID, data, len);
+    if(err_code != NRF_SUCCESS){
+        NRF_LOG_ERROR("GPS TIME update error %d",err_code);
     }
     return err_code;
 };
@@ -199,9 +188,8 @@ static void ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
             break;
 
         case BLE_GATTS_EVT_HVN_TX_COMPLETE:
-            NRF_LOG_INFO("Send complete");
+            xTaskNotifyGive(xNotifyTask);
             break;
-
 
         default:
             // No implementation needed.

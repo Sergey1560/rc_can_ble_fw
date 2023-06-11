@@ -22,17 +22,16 @@ void ublox_pack_data(uint8_t *main_data, uint8_t *time_data){
 	}
 
 	time_data[0] = ((sync & 0x7) << 5) | ((dateAndHour >> 16) & 0x1F);
-	time_data[1] = dateAndHour >> 8;
-	time_data[2] = dateAndHour;
-
+	time_data[1] = (dateAndHour >> 8) & 0xFF;
+	time_data[2] = (dateAndHour) & 0xFF;
 
 	//Sync bits* (3 bits) and time from hour start (21 bits = (minute * 30000) + (seconds * 500) + (milliseconds / 2))
-	int timeSinceHourStart = (ublox_data.nav_pvt.minute * 30000) + (ublox_data.nav_pvt.second * 500) + (ublox_data.nav_pvt.nano / 2);
+	int timeSinceHourStart = (ublox_data.nav_pvt.minute * 30000) + (ublox_data.nav_pvt.second * 500) + (ublox_data.nav_pvt.nano/2000000);
 
  	main_data[0] = ((sync & 0x7) << 5) | ((timeSinceHourStart >> 16) & 0x1F);
-    main_data[1] = timeSinceHourStart >> 8;
-    main_data[2] = timeSinceHourStart;
-
+    main_data[1] = (timeSinceHourStart >> 8) & 0xFF;
+    main_data[2] = (timeSinceHourStart) & 0xFF;
+	
 	main_data[3] = (ublox_data.nav_pvt.numSV & 0x3F) | ((ublox_data.nav_pvt.fixtype & 3) << 6); 
 
 	main_data[4] = (ublox_data.nav_pvt.latitude >> 24) & 0xFF;

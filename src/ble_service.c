@@ -9,6 +9,12 @@
 #include "can_abit.h"
 #include "ublox.h"
 
+#include "FreeRTOS.h"
+#include "task.h"
+#include "queue.h"
+#include "semphr.h"
+
+
 volatile uint8_t __attribute__ ((aligned (4))) can_main_data[CAN_MAIN_UUID_LEN];
 volatile uint8_t __attribute__ ((aligned (4))) can_filter_data[CAN_FILTER_UUID_LEN];
 volatile uint8_t __attribute__ ((aligned (4))) can_data[CAN_MAIN_UUID_LEN] = {0};
@@ -93,8 +99,10 @@ int8_t handle_to_id(ble_cus_t * p_cus, ble_cus_evt_t *evt){
     return -1;
 }
 
+
 void ble_notify_task(void *p){
-    uint32_t gps_time_value = 0;
+    BaseType_t xResult;
+
 
     while(1){
         if((notification_enabled.gps_main == 0) && (notification_enabled.gps_time == 0) && (notification_enabled.can_main == 0)){
@@ -102,27 +110,29 @@ void ble_notify_task(void *p){
             vTaskSuspend(NULL);
         }else{
             
-            ublox_pack_data((uint8_t *)gps_main_data,(uint8_t *)gps_time_data);
-            
             if(notification_enabled.can_main){
                 adlm_pack_data((uint8_t *)can_data);
+                
+                xTaskNotifyStateClear(xNotifyTask);
                 update_can_data((uint8_t *)can_data, CAN_MAIN_UUID_LEN);
+                xResult = xTaskNotifyWait(pdFALSE, 0xffffffff, NULL, pdMS_TO_TICKS(1000)); 
+                if(xResult != pdTRUE){
+                    NRF_LOG_ERROR("No nofity respond CAN");
+                }
             }
 
-            if(notification_enabled.gps_time){
-                uint32_t time = (gps_time_data[0] << 16)|(gps_time_data[1] << 8)|gps_time_data[2];
-                if(gps_time_value != time){
-                    update_gps_time_data((uint8_t *)gps_time_data,GPS_TIME_UUID_LEN);
-                    gps_time_value = time;
+            if(notification_enabled.gps_main){
+                ublox_pack_data((uint8_t *)gps_main_data,(uint8_t *)gps_time_data);
+
+                xTaskNotifyStateClear(xNotifyTask);
+                update_gps_main_data((uint8_t *)gps_main_data,GPS_MAIN_UUID_LEN);
+                xResult = xTaskNotifyWait(pdFALSE, 0xffffffff, NULL, pdMS_TO_TICKS(1000)); 
+                if(xResult != pdTRUE){
+                    NRF_LOG_ERROR("No nofity respond GPS Main");
                 }
             };
 
-            if(notification_enabled.gps_main){
-                update_gps_main_data((uint8_t *)gps_main_data,GPS_MAIN_UUID_LEN);
-                
-            };
-
-            vTaskDelay(NOTIFY_DATA_INTERVAL);
+//            vTaskDelay(NOTIFY_DATA_INTERVAL);
         }
     }
 
@@ -143,6 +153,8 @@ static void on_connect(ble_cus_t * p_cus, ble_evt_t const * p_ble_evt)
 
     evt.evt_type = BLE_CUS_EVT_CONNECTED;
     evt.char_handle = 0; 
+
+    ublox_pack_data((uint8_t *)gps_main_data,(uint8_t *)gps_time_data);
 
     p_cus->evt_handler(p_cus, &evt);
 }
@@ -195,16 +207,16 @@ static void on_disconnect(ble_cus_t * p_cus, ble_evt_t const * p_ble_evt)
 static void on_write(ble_cus_t * p_cus, ble_evt_t const * p_ble_evt)
 {
     ble_gatts_evt_write_t * p_evt_write = (ble_gatts_evt_write_t *)&p_ble_evt->evt.gatts_evt.params.write;
-    NRF_LOG_INFO("On write. PEW_H: %0X",p_evt_write->handle);
+//    NRF_LOG_INFO("On write. PEW_H: %d",p_evt_write->handle);
 
     // Check if the handle passed with the event matches the Custom Value Characteristic handle.
-    if (p_evt_write->handle == p_cus->can_filter_handles.value_handle){
-        NRF_LOG_INFO("FILTER Write event. Len: %d Data0: %d",p_evt_write->len,p_evt_write->data[0]);
-    }
+    // if (p_evt_write->handle == p_cus->can_filter_handles.value_handle){
+    //     NRF_LOG_INFO("FILTER Write event. Len: %d Data0: %d",p_evt_write->len,p_evt_write->data[0]);
+    // }
 
     // Check if the Custom value CCCD is written to and that the value is the appropriate length, i.e 2 bytes.
     if ((p_evt_write->handle == p_cus->can_main_handles.cccd_handle) && (p_evt_write->len == 2)){
-        NRF_LOG_INFO("MAIN Write event.");
+//        NRF_LOG_INFO("MAIN Write event.");
         if (p_cus->evt_handler != NULL){
             ble_cus_evt_t evt;
 
@@ -219,7 +231,7 @@ static void on_write(ble_cus_t * p_cus, ble_evt_t const * p_ble_evt)
     }
 
     if ((p_evt_write->handle == p_cus->gps_main_handles.cccd_handle) && (p_evt_write->len == 2)){
-        NRF_LOG_INFO("GPS main Write event.");
+        //NRF_LOG_INFO("GPS main Write event.");
         if (p_cus->evt_handler != NULL){
             ble_cus_evt_t evt;
 
@@ -234,7 +246,7 @@ static void on_write(ble_cus_t * p_cus, ble_evt_t const * p_ble_evt)
     }
 
     if ((p_evt_write->handle == p_cus->gps_time_handles.cccd_handle) && (p_evt_write->len == 2)){
-        NRF_LOG_INFO("GPS time Write event.");
+        //NRF_LOG_INFO("GPS time Write event.");
         if (p_cus->evt_handler != NULL){
             ble_cus_evt_t evt;
 
@@ -462,8 +474,7 @@ static uint32_t gps_time_char_add(ble_cus_t * p_cus)
     attr_char_value.init_len  = GPS_TIME_UUID_LEN;
     attr_char_value.init_offs = 0;
     attr_char_value.max_len   = GPS_TIME_UUID_LEN;
-    attr_char_value.p_value   = (uint8_t *)gps_main_data;
-
+    attr_char_value.p_value   = (uint8_t *)gps_time_data;
     err_code = sd_ble_gatts_characteristic_add(p_cus->service_handle, &char_md, &attr_char_value,  &p_cus->gps_time_handles);
     return err_code;
 }
@@ -566,7 +577,6 @@ void ble_cus_on_ble_evt( ble_evt_t const * p_ble_evt, void * p_context)
              //NRF_LOG_INFO("BLE_GATTS_EVT_HVN_TX_COMPLETE");
              break;
 
-
         default:
             NRF_LOG_INFO("Unknown BLE_GAP_EVT %d",p_ble_evt->header.evt_id);
             // No implementation needed.
@@ -633,7 +643,6 @@ uint32_t ble_data_update(ble_cus_t * p_cus, uint8_t char_id, uint8_t *data, uint
         hvx_params.p_data = gatts_value.p_value;
 
         err_code = sd_ble_gatts_hvx(p_cus->conn_handle, &hvx_params);
-        //NRF_LOG_INFO("sd_ble_gatts_hvx result: %x. \r\n", err_code); 
     }
     else
     {
