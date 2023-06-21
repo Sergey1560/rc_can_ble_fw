@@ -3,10 +3,6 @@
 *                        The Embedded Experts                        *
 *                           www.segger.com                           *
 **********************************************************************
-                                                                      
-File          :                                                     
-Created       : 19 ÃÂÃÂ¾ÃÂÃÂºÃÂÃÂ 2019  21:38                                                    
-Ozone Version : V2.70a                                                    
 */
 
 /*********************************************************************
@@ -22,7 +18,7 @@ void OnProjectLoad (void) {
   //
   // Dialog-generated settings
   //
-  Project.SetDevice ("NRF52832_XXAA");
+  Project.SetDevice ("NRF52840_XXAA");
   Project.SetHostIF ("USB", "");
   Project.SetTargetIF ("SWD");
   Project.SetTIFSpeed ("12 MHz");
@@ -137,8 +133,10 @@ void AfterTargetReset (void) {
   unsigned int PC;                                                
   unsigned int VectorTableAddr;                                   
                                                                   
-  VectorTableAddr = Elf.GetBaseAddr();                            
+  //VectorTableAddr = Elf.GetBaseAddr();                            
                                                                   
+  VectorTableAddr = 0;
+
   if (VectorTableAddr != 0xFFFFFFFF) {                            
     SP = Target.ReadU32(VectorTableAddr);                         
     Target.SetReg("SP", SP);                                    
@@ -146,14 +144,8 @@ void AfterTargetReset (void) {
     Util.Log("Project file error: failed to get program base"); 
   }                                                               
                                                                   
-  PC = Elf.GetEntryPointPC();                                     
-                                                                  
-  if (PC != 0xFFFFFFFF) {                                         
-    Target.SetReg("PC", PC);                                    
-  } else if (VectorTableAddr != 0xFFFFFFFF) {                     
-    PC = Target.ReadU32(VectorTableAddr + 4);                     
-    Target.SetReg("PC", PC);                                    
-  }
+  PC = Target.ReadU32(VectorTableAddr + 4);                     
+  Target.SetReg("PC", PC);                                    
 }
 
 /*********************************************************************
@@ -244,8 +236,9 @@ void AfterTargetDownload (void) {
   unsigned int PC;                                                
   unsigned int VectorTableAddr;                                   
                                                                   
-  VectorTableAddr = Elf.GetBaseAddr();                            
+  //VectorTableAddr = Elf.GetBaseAddr();                            
                                                                   
+  VectorTableAddr = 0;                                                                                              
   if (VectorTableAddr != 0xFFFFFFFF) {                            
     SP = Target.ReadU32(VectorTableAddr);                         
     Target.SetReg("SP", SP);                                    
@@ -253,14 +246,8 @@ void AfterTargetDownload (void) {
     Util.Log("Project file error: failed to get program base"); 
   }                                                               
                                                                   
-  PC = Elf.GetEntryPointPC();                                     
-                                                                  
-  if (PC != 0xFFFFFFFF) {                                         
-    Target.SetReg("PC", PC);                                    
-  } else if (VectorTableAddr != 0xFFFFFFFF) {                     
-    PC = Target.ReadU32(VectorTableAddr + 4);                     
-    Target.SetReg("PC", PC);                                    
-  }
+  PC = Target.ReadU32(VectorTableAddr + 4);                     
+  Target.SetReg("PC", PC);                                    
 }
 
 /*********************************************************************

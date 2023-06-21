@@ -33,7 +33,7 @@
 #define GPS_TIME_UUID                   0x0004
 #define GPS_TIME_UUID_LEN               3 
 
-#define NOTIFY_DATA_INTERVAL            100
+#define NOTIFY_DATA_INTERVAL            50
 
 
 struct notification_enabled_t{
