@@ -5,7 +5,6 @@
 #include "nrf_drv_clock.h"
 
 #include "ble_common.h"
-//#include "ble_service.h"
 #include "leds.h"
 #include "uart.h"
 #include "can.h"
@@ -42,11 +41,11 @@ int main(void)
     err_code = nrf_drv_clock_init();
     APP_ERROR_CHECK(err_code);
     
-   nrf_drv_clock_hfclk_request(NULL);
-   while (!nrf_drv_clock_hfclk_is_running()){}
+    nrf_drv_clock_hfclk_request(NULL);
+    while (!nrf_drv_clock_hfclk_is_running()){}
 
-   nrf_drv_clock_lfclk_request(NULL);
-   while (!nrf_drv_clock_lfclk_is_running()){}
+    nrf_drv_clock_lfclk_request(NULL);
+    while (!nrf_drv_clock_lfclk_is_running()){}
 
     rc_leds_init();
     rc_led_all(0);
