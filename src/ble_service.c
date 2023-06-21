@@ -103,37 +103,33 @@ int8_t handle_to_id(ble_cus_t * p_cus, ble_cus_evt_t *evt){
 void ble_notify_task(void *p){
     BaseType_t xResult;
 
-
     while(1){
         if((notification_enabled.gps_main == 0) && (notification_enabled.gps_time == 0) && (notification_enabled.can_main == 0)){
             NRF_LOG_INFO("Suspend notify Task");
             vTaskSuspend(NULL);
         }else{
-            
+            if(notification_enabled.gps_main){
+                ublox_pack_data((uint8_t *)gps_main_data,(uint8_t *)gps_time_data);
+                update_gps_main_data((uint8_t *)gps_main_data,GPS_MAIN_UUID_LEN);
+                xResult = xTaskNotifyWait(pdFALSE, 0xffffffff, NULL, pdMS_TO_TICKS(200)); 
+
+                if(xResult != pdTRUE){
+                    NRF_LOG_ERROR("No nofity respond GPS");
+                }
+            };
+
+
             if(notification_enabled.can_main){
                 adlm_pack_data((uint8_t *)can_data);
-                
-                xTaskNotifyStateClear(xNotifyTask);
                 update_can_data((uint8_t *)can_data, CAN_MAIN_UUID_LEN);
-                xResult = xTaskNotifyWait(pdFALSE, 0xffffffff, NULL, pdMS_TO_TICKS(1000)); 
+                xResult = xTaskNotifyWait(pdFALSE, 0xffffffff, NULL, pdMS_TO_TICKS(200)); 
                 if(xResult != pdTRUE){
                     NRF_LOG_ERROR("No nofity respond CAN");
                 }
             }
-
-            if(notification_enabled.gps_main){
-                ublox_pack_data((uint8_t *)gps_main_data,(uint8_t *)gps_time_data);
-
-                xTaskNotifyStateClear(xNotifyTask);
-                update_gps_main_data((uint8_t *)gps_main_data,GPS_MAIN_UUID_LEN);
-                xResult = xTaskNotifyWait(pdFALSE, 0xffffffff, NULL, pdMS_TO_TICKS(1000)); 
-                if(xResult != pdTRUE){
-                    NRF_LOG_ERROR("No nofity respond GPS Main");
-                }
-            };
-
-//            vTaskDelay(NOTIFY_DATA_INTERVAL);
         }
+    
+    vTaskDelay(pdMS_TO_TICKS(100));
     }
 
 
@@ -147,12 +143,18 @@ void ble_notify_task(void *p){
  */
 static void on_connect(ble_cus_t * p_cus, ble_evt_t const * p_ble_evt)
 {
+    //uint32_t err_code;
     p_cus->conn_handle = p_ble_evt->evt.gap_evt.conn_handle;
 
     ble_cus_evt_t evt;
 
     evt.evt_type = BLE_CUS_EVT_CONNECTED;
     evt.char_handle = 0; 
+
+    // err_code = ble_set_mtu(23);
+    // APP_ERROR_CHECK(err_code);
+
+    // NRF_LOG_INFO("MTU: %d",ble_get_mtu(p_cus->conn_handle));
 
     ublox_pack_data((uint8_t *)gps_main_data,(uint8_t *)gps_time_data);
 
@@ -178,8 +180,8 @@ static void on_par_update(ble_cus_t * p_cus, ble_evt_t const * p_ble_evt)
 
 static void on_data_len_upd(ble_cus_t * p_cus, ble_evt_t const * p_ble_evt)
 {
-    //NRF_LOG_INFO("->Update DLC:\n Max RX: %d Max RX us: %d Max TX %d Max tx us: %d",p_ble_evt->evt.gap_evt.params.data_length_update.effective_params.max_rx_octets,p_ble_evt->evt.gap_evt.params.data_length_update.effective_params.max_rx_time_us,p_ble_evt->evt.gap_evt.params.data_length_update.effective_params.max_tx_octets,p_ble_evt->evt.gap_evt.params.data_length_update.effective_params.max_tx_time_us);
-    //NRF_LOG_INFO("->Update DLC REQ:\n Max RX: %d Max RX us: %d Max TX %d Max tx us: %d",p_ble_evt->evt.gap_evt.params.data_length_update_request.peer_params.max_rx_octets,p_ble_evt->evt.gap_evt.params.data_length_update_request.peer_params.max_rx_time_us,p_ble_evt->evt.gap_evt.params.data_length_update_request.peer_params.max_tx_octets, p_ble_evt->evt.gap_evt.params.data_length_update_request.peer_params.max_tx_time_us);
+    // NRF_LOG_INFO("->Update DLC:\n Max RX: %d Max RX us: %d Max TX %d Max tx us: %d",p_ble_evt->evt.gap_evt.params.data_length_update.effective_params.max_rx_octets,p_ble_evt->evt.gap_evt.params.data_length_update.effective_params.max_rx_time_us,p_ble_evt->evt.gap_evt.params.data_length_update.effective_params.max_tx_octets,p_ble_evt->evt.gap_evt.params.data_length_update.effective_params.max_tx_time_us);
+    // NRF_LOG_INFO("->Update DLC REQ:\n Max RX: %d Max RX us: %d Max TX %d Max tx us: %d",p_ble_evt->evt.gap_evt.params.data_length_update_request.peer_params.max_rx_octets,p_ble_evt->evt.gap_evt.params.data_length_update_request.peer_params.max_rx_time_us,p_ble_evt->evt.gap_evt.params.data_length_update_request.peer_params.max_tx_octets, p_ble_evt->evt.gap_evt.params.data_length_update_request.peer_params.max_tx_time_us);
 }
 
 static void on_data_len_upd_req(ble_cus_t * p_cus, ble_evt_t const * p_ble_evt)
@@ -613,7 +615,7 @@ uint32_t ble_data_update(ble_cus_t * p_cus, uint8_t char_id, uint8_t *data, uint
         break;
     }
 
-
+    //NRF_LOG_INFO("MTU: %d",ble_get_mtu(p_cus->conn_handle));
 
     // Initialize value struct.
     memset(&gatts_value, 0, sizeof(gatts_value));
@@ -643,6 +645,7 @@ uint32_t ble_data_update(ble_cus_t * p_cus, uint8_t char_id, uint8_t *data, uint
         hvx_params.p_data = gatts_value.p_value;
 
         err_code = sd_ble_gatts_hvx(p_cus->conn_handle, &hvx_params);
+        NRF_LOG_INFO("[%d] Send %d bytes",xTaskGetTickCount(),*hvx_params.p_len);
     }
     else
     {

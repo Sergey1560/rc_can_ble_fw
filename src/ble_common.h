@@ -67,6 +67,9 @@
 extern TaskHandle_t xNotifyTask;
 
 ret_code_t bluetooth_start(bool erase_bonds);
+ret_code_t ble_set_mtu(uint16_t mtu);
+uint16_t ble_get_mtu(uint16_t conn);
+
 uint32_t update_can_data(uint8_t *data, uint32_t len);
 uint32_t update_gps_main_data(uint8_t *data, uint32_t len);
 uint32_t update_gps_time_data(uint8_t *data, uint32_t len);

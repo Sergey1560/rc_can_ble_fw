@@ -36,12 +36,30 @@ static void delete_bonds(void);
 static void advertising_init(void);
 static void pm_evt_handler(pm_evt_t const * p_evt);
 
+
+ret_code_t ble_set_mtu(uint16_t mtu){
+    ret_code_t err_code;
+
+    err_code = nrf_ble_gatt_att_mtu_periph_set(&m_gatt, mtu);
+
+    return err_code; 
+}
+
+
+uint16_t ble_get_mtu(uint16_t conn){
+    uint16_t mtu;
+    mtu = nrf_ble_gatt_eff_mtu_get(&m_gatt,conn);
+
+    return mtu;
+}
+
+
 uint32_t update_can_data(uint8_t *data, uint32_t len){
     ret_code_t err_code = NRF_SUCCESS;
 
     err_code = ble_data_update(&rcdiy_service, CAN_MAIN_ID, data, len);
     if(err_code != NRF_SUCCESS){
-        NRF_LOG_ERROR("Can update error %d",err_code);
+        NRF_LOG_ERROR("CAN update error %d (%s)",err_code, nrf_strerror_get(err_code));
     }
     return err_code;
 };
@@ -52,7 +70,7 @@ uint32_t update_gps_main_data(uint8_t *data, uint32_t len){
 
     err_code = ble_data_update(&rcdiy_service, GPS_MAIN_ID, data, len);
     if(err_code != NRF_SUCCESS){
-        NRF_LOG_ERROR("GPS Main update error %d",err_code);
+        NRF_LOG_ERROR("GPS Main update error %d (%s)",err_code, nrf_strerror_get(err_code));
     }
     return err_code;
 };
@@ -62,7 +80,8 @@ uint32_t update_gps_time_data(uint8_t *data, uint32_t len){
 
     err_code = ble_data_update(&rcdiy_service, GPS_TIME_ID, data, len);
     if(err_code != NRF_SUCCESS){
-        NRF_LOG_ERROR("GPS TIME update error %d",err_code);
+        NRF_LOG_ERROR("GPS Time update error %d (%s)",err_code, nrf_strerror_get(err_code));
+
     }
     return err_code;
 };
@@ -378,7 +397,6 @@ static void gap_params_init(void)
     err_code = sd_ble_gap_ppcp_set(&gap_conn_params);
     APP_ERROR_CHECK(err_code);
 }
-
 
 /**@brief Function for initializing the GATT module.
  */
