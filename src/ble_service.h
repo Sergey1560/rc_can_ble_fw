@@ -33,7 +33,7 @@
 #define GPS_TIME_UUID                   0x0004
 #define GPS_TIME_UUID_LEN               3 
 
-#define NOTIFY_DATA_INTERVAL            1000
+#define NOTIFY_DATA_INTERVAL            100
 
 
 struct notification_enabled_t{
@@ -124,7 +124,7 @@ void ble_cus_on_ble_evt( ble_evt_t const * p_ble_evt, void * p_context);
 uint32_t ble_data_update(ble_cus_t * p_cus, uint8_t char_id, uint8_t *data, uint32_t len);
 
 void ble_notify_task(void *p);
-
+void control_notify_task(uint8_t flag);
 void notify_set(uint8_t flag, enum CHAR_ID_t char_id);
 uint32_t notify_get(enum CHAR_ID_t char_id);
 int8_t handle_to_id(ble_cus_t * p_cus, ble_cus_evt_t *evt);

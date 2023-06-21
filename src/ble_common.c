@@ -54,37 +54,24 @@ uint16_t ble_get_mtu(uint16_t conn){
 }
 
 
-uint32_t update_can_data(uint8_t *data, uint32_t len){
+uint32_t update_data(uint8_t *data, uint8_t char_id, uint32_t len){
     ret_code_t err_code = NRF_SUCCESS;
+    uint32_t try_count = 100;
 
-    err_code = ble_data_update(&rcdiy_service, CAN_MAIN_ID, data, len);
+    NRF_LOG_INFO("[%d] Send %d bytes",xTaskGetTickCount(),len);
+    do{
+        err_code = ble_data_update(&rcdiy_service, char_id, data, len);
+        if(err_code != NRF_SUCCESS){
+            vTaskDelay(10);
+        }
+    }while((err_code == NRF_ERROR_RESOURCES) && (try_count-- > 0));
+
     if(err_code != NRF_SUCCESS){
-        NRF_LOG_ERROR("CAN update error %d (%s)",err_code, nrf_strerror_get(err_code));
+        NRF_LOG_ERROR("%d [%d] update error %d (%s)",char_id,try_count,err_code, nrf_strerror_get(err_code));
     }
     return err_code;
 };
 
-
-uint32_t update_gps_main_data(uint8_t *data, uint32_t len){
-    ret_code_t err_code = NRF_SUCCESS;
-
-    err_code = ble_data_update(&rcdiy_service, GPS_MAIN_ID, data, len);
-    if(err_code != NRF_SUCCESS){
-        NRF_LOG_ERROR("GPS Main update error %d (%s)",err_code, nrf_strerror_get(err_code));
-    }
-    return err_code;
-};
-
-uint32_t update_gps_time_data(uint8_t *data, uint32_t len){
-    ret_code_t err_code = NRF_SUCCESS;
-
-    err_code = ble_data_update(&rcdiy_service, GPS_TIME_ID, data, len);
-    if(err_code != NRF_SUCCESS){
-        NRF_LOG_ERROR("GPS Time update error %d (%s)",err_code, nrf_strerror_get(err_code));
-
-    }
-    return err_code;
-};
 
 
 /**@brief Function for handling Queued Write Module errors.
@@ -207,7 +194,7 @@ static void ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
             break;
 
         case BLE_GATTS_EVT_HVN_TX_COMPLETE:
-            xTaskNotifyGive(xNotifyTask);
+            //xTaskNotifyGive(xNotifyTask);
             break;
 
         default:
@@ -259,10 +246,7 @@ static void on_cus_evt(ble_cus_t  *p_cus_service, ble_cus_evt_t * p_evt)
         case BLE_CUS_EVT_NOTIFICATION_ENABLED:
             NRF_LOG_INFO("Enable notify ID %d",char_id);
             notify_set(1,char_id);
-
-            if(xNotifyTask != NULL){
-                vTaskResume(xNotifyTask);
-            }
+            control_notify_task(1);
             
             break;
 

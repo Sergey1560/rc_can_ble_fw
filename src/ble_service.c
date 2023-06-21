@@ -14,6 +14,7 @@
 #include "queue.h"
 #include "semphr.h"
 
+TimerHandle_t xTimers;
 
 volatile uint8_t __attribute__ ((aligned (4))) can_main_data[CAN_MAIN_UUID_LEN];
 volatile uint8_t __attribute__ ((aligned (4))) can_filter_data[CAN_FILTER_UUID_LEN];
@@ -32,17 +33,14 @@ void notify_set(uint8_t flag, enum CHAR_ID_t char_id){
     switch (char_id)
     {
     case 1:
-        //All chars
         notification_enabled.can_main = flag;
         break;
 
     case 2:
-        //All chars
         notification_enabled.gps_main = flag;
         break;
 
     case 3:
-        //All chars
         notification_enabled.gps_time = flag;
         break;
 
@@ -99,41 +97,50 @@ int8_t handle_to_id(ble_cus_t * p_cus, ble_cus_evt_t *evt){
     return -1;
 }
 
+void control_notify_task(uint8_t flag){
+
+    if(flag){
+        if(xTimers != NULL){
+            xTimerStart(xTimers, 0 );
+        }
+    }else{
+        if(xTimers != NULL){
+            xTimerStop(xTimers, 0 );
+        }
+    }
+
+}
+ 
+
+ void vTimerCallback( TimerHandle_t xTimer ){
+    if(xNotifyTask != NULL){
+        xTaskNotifyGive(xNotifyTask);
+    };
+ }
 
 void ble_notify_task(void *p){
-    BaseType_t xResult;
+
+    xTimers= xTimerCreate("Timer", NOTIFY_DATA_INTERVAL , pdTRUE, ( void * ) 0, vTimerCallback);
 
     while(1){
+        xTaskNotifyWait(pdFALSE, 0xffffffff, NULL, portMAX_DELAY); 
+
         if((notification_enabled.gps_main == 0) && (notification_enabled.gps_time == 0) && (notification_enabled.can_main == 0)){
-            NRF_LOG_INFO("Suspend notify Task");
-            vTaskSuspend(NULL);
+            NRF_LOG_INFO("Stop notify timer");
+            control_notify_task(0);
         }else{
             if(notification_enabled.gps_main){
                 ublox_pack_data((uint8_t *)gps_main_data,(uint8_t *)gps_time_data);
-                update_gps_main_data((uint8_t *)gps_main_data,GPS_MAIN_UUID_LEN);
-                xResult = xTaskNotifyWait(pdFALSE, 0xffffffff, NULL, pdMS_TO_TICKS(200)); 
-
-                if(xResult != pdTRUE){
-                    NRF_LOG_ERROR("No nofity respond GPS");
-                }
+                update_data((uint8_t *)gps_main_data,GPS_MAIN_ID, GPS_MAIN_UUID_LEN);
             };
 
 
             if(notification_enabled.can_main){
                 adlm_pack_data((uint8_t *)can_data);
-                update_can_data((uint8_t *)can_data, CAN_MAIN_UUID_LEN);
-                xResult = xTaskNotifyWait(pdFALSE, 0xffffffff, NULL, pdMS_TO_TICKS(200)); 
-                if(xResult != pdTRUE){
-                    NRF_LOG_ERROR("No nofity respond CAN");
-                }
+                update_data((uint8_t *)can_data, CAN_MAIN_ID, CAN_MAIN_UUID_LEN);
             }
         }
-    
-    vTaskDelay(pdMS_TO_TICKS(100));
     }
-
-
-
 }
 
 /**@brief Function for handling the Connect event.
@@ -615,8 +622,6 @@ uint32_t ble_data_update(ble_cus_t * p_cus, uint8_t char_id, uint8_t *data, uint
         break;
     }
 
-    //NRF_LOG_INFO("MTU: %d",ble_get_mtu(p_cus->conn_handle));
-
     // Initialize value struct.
     memset(&gatts_value, 0, sizeof(gatts_value));
 
@@ -645,8 +650,7 @@ uint32_t ble_data_update(ble_cus_t * p_cus, uint8_t char_id, uint8_t *data, uint
         hvx_params.p_data = gatts_value.p_value;
 
         err_code = sd_ble_gatts_hvx(p_cus->conn_handle, &hvx_params);
-        NRF_LOG_INFO("[%d] Send %d bytes",xTaskGetTickCount(),*hvx_params.p_len);
-    }
+     }
     else
     {
         err_code = NRF_ERROR_INVALID_STATE;
