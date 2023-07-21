@@ -14,11 +14,6 @@
 #include "queue.h"
 #include "semphr.h"
 
-
-#define LED1 NRF_GPIO_PIN_MAP(0,29)
-#define LED2 NRF_GPIO_PIN_MAP(1,11) 
-
-
 void assert_nrf_callback(uint16_t line_num, const uint8_t * p_file_name)
 {
     app_error_handler(DEAD_BEEF, line_num, p_file_name);

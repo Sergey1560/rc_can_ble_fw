@@ -1,4 +1,8 @@
 #include "mcp2515.h"
+#include "pins_config.h"
+
+#include "FreeRTOS.h"
+#include "task.h"
 
 
 static uint8_t mcp2515_read_reg(uint8_t reg);
@@ -14,6 +18,7 @@ volatile uint8_t __attribute__ ((aligned (4))) rx_buffer[SPI_TRANS_LEN];
 int mcp2515_init(void){
 
     spi_init();
+    nrf_gpio_cfg_output(MCP_RST_PIN);
     mcp2515_reset();
     
     delay_ms(100); //128 OSC CLK minimum
@@ -42,6 +47,12 @@ int mcp2515_init(void){
 
 
 void mcp2515_reset(void){
+    
+    nrf_gpio_pin_write(MCP_RST_PIN, 0);
+    vTaskDelay(100);
+    nrf_gpio_pin_write(MCP_RST_PIN, 1);
+    vTaskDelay(100);
+
     *tx_buffer = MCP2515_INSTR_RESET;
     spi_transfer((uint8_t *)tx_buffer, (uint8_t *)rx_buffer,1);
 };
