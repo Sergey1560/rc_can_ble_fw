@@ -6,6 +6,7 @@
 #include "semphr.h"
 #include "nrf_drv_gpiote.h"
 
+#include "pins_config.h"
 
 volatile TaskHandle_t xCanTask;
 

@@ -5,10 +5,10 @@
             "compilerPath": "/usr/bin/arm-none-eabi-gcc",
             "includePath": [
                 "${workspaceFolder}/src/",
-                "~/Projects/NRF52/SDK/components/**",
-                "~/Projects/NRF52/SDK/modules/**",
-                "~/Projects/NRF52/SDK/integration/**",
-                "~/Projects/NRF52/SDK/external/**",
+                "/home/sergey/soft/SDK/nrf52/components/**",
+                "/home/sergey/soft/SDK/nrf52/modules/**",
+                "/home/sergey/soft/SDK/nrf52/integration/**",
+                "/home/sergey/soft/SDK/nrf52/external/**",
                 "${workspaceFolder}/config"
             ],
             "defines": [

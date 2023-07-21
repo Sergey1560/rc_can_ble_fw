@@ -1,7 +1,8 @@
 #include "mcp2515_hal.h"
-
 #include "FreeRTOS.h"
 #include "task.h"
+
+#include "pins_config.h"
 
 static const nrf_drv_spi_t spi = NRF_DRV_SPI_INSTANCE(SPI_INSTANCE);  /**< SPI instance. */
 

@@ -3,6 +3,8 @@
 #include "app_error.h"
 #include "nrf_delay.h"
 
+#include "pins_config.h"
+
 volatile TaskHandle_t xGpsTask;
 volatile TaskHandle_t xGpsParse;
 volatile QueueHandle_t GpsCmdQ_Handle;

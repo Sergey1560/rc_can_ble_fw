@@ -151,8 +151,6 @@ static void ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
             notify_set(0,0);
             NRF_LOG_INFO("Disconnected.");
             rc_led_connection(0);
-            rc_led_candata(0);
-            // LED indication will be changed when advertising starts.
             break;
 
         case BLE_GAP_EVT_CONNECTED:

@@ -2,7 +2,7 @@ PROJECT_NAME     := ble_app
 TARGETS          := firmware
 OUTPUT_DIRECTORY := build
 
-SDK_ROOT := ../SDK
+SDK_ROOT := /home/sergey/soft/SDK/nrf52
 PROJ_DIR := ./
 
 $(OUTPUT_DIRECTORY)/firmware.out: \

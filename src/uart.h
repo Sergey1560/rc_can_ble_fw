@@ -16,11 +16,6 @@
 //#define USE_APP_UART
 #define USE_NATIVE_UART
 
-//#define UART_PIN 5
-
-#define RX_PIN 26
-#define TX_PIN 15
-
 extern volatile TaskHandle_t xGpsParse;
 extern volatile TaskHandle_t xGpsTask;
 
