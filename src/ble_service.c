@@ -123,6 +123,7 @@ void control_notify_task(uint8_t flag){
  }
 
 void ble_notify_can_task(void *p){
+    NRF_LOG_DEBUG("CAN notify task started");
 
     xTimers= xTimerCreate("Timer", NOTIFY_DATA_INTERVAL , pdTRUE, ( void * ) 0, vTimerCallback);
 
@@ -144,9 +145,9 @@ void ble_notify_can_task(void *p){
 void ble_notify_gps_task(void *p){
     while(1){
         xTaskNotifyWait(pdFALSE, 0xffffffff, NULL, portMAX_DELAY); 
-        rc_led_alive_invert();
-
+        
         if(notification_enabled.gps_main){
+            rc_led_alive_invert();
             ublox_pack_data((uint8_t *)gps_main_data,(uint8_t *)gps_time_data);
             update_data((uint8_t *)gps_main_data,GPS_MAIN_ID, GPS_MAIN_UUID_LEN);
         };

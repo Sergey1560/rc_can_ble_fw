@@ -21,7 +21,7 @@ static ble_uuid_t m_adv_uuids[] = {{RCDIY_SERVICE_UUID, BLE_UUID_TYPE_BLE}};
 //static void advertising_start(bool erase_bonds);
 static void advertising_start(void * p_erase_bonds);
 static void nrf_qwr_error_handler(uint32_t nrf_error);
-static void sleep_mode_enter(void);
+//static void sleep_mode_enter(void);
 static void on_adv_evt(ble_adv_evt_t ble_adv_evt);
 static void ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context);
 static void on_cus_evt(ble_cus_t  *p_cus_service, ble_cus_evt_t * p_evt);
@@ -93,21 +93,21 @@ static void nrf_qwr_error_handler(uint32_t nrf_error)
  *
  * @note This function will not return.
  */
-static void sleep_mode_enter(void)
-{
-    ret_code_t err_code;
+// static void sleep_mode_enter(void)
+// {
+//     ret_code_t err_code;
 
-    // err_code = bsp_indication_set(BSP_INDICATE_IDLE);
-    // APP_ERROR_CHECK(err_code);
+//     // err_code = bsp_indication_set(BSP_INDICATE_IDLE);
+//     // APP_ERROR_CHECK(err_code);
 
-    // // Prepare wakeup buttons.
-    // err_code = bsp_btn_ble_sleep_mode_prepare();
-    // APP_ERROR_CHECK(err_code);
+//     // // Prepare wakeup buttons.
+//     // err_code = bsp_btn_ble_sleep_mode_prepare();
+//     // APP_ERROR_CHECK(err_code);
 
-    // Go to system-off mode (this function will not return; wakeup will cause a reset).
-    err_code = sd_power_system_off();
-    APP_ERROR_CHECK(err_code);
-}
+//     // Go to system-off mode (this function will not return; wakeup will cause a reset).
+//     err_code = sd_power_system_off();
+//     APP_ERROR_CHECK(err_code);
+// }
 
 
 /**@brief Function for handling advertising events.
@@ -118,6 +118,7 @@ static void sleep_mode_enter(void)
  */
 static void on_adv_evt(ble_adv_evt_t ble_adv_evt)
 {
+    bool erase_bonds = 0;
     //ret_code_t err_code;
 
     switch (ble_adv_evt)
@@ -129,7 +130,9 @@ static void on_adv_evt(ble_adv_evt_t ble_adv_evt)
             break;
 
         case BLE_ADV_EVT_IDLE:
-            sleep_mode_enter();
+            NRF_LOG_INFO("IDLE hook, start ADV");
+            nrf_sdh_freertos_init(advertising_start, &erase_bonds);
+            //sleep_mode_enter();
             break;
 
         default:
@@ -537,7 +540,6 @@ static void pm_evt_handler(pm_evt_t const * p_evt)
 
 ret_code_t bluetooth_start(bool erase_bonds)
 {
-
     ble_stack_init();
     gap_params_init();
     gatt_init();
@@ -545,12 +547,13 @@ ret_code_t bluetooth_start(bool erase_bonds)
     advertising_init();
     conn_params_init();
     peer_manager_init();
-
+    
     xTaskCreate(ble_notify_can_task, "Can_NTF", 3*1024, NULL, 2, (TaskHandle_t *)&xNotifyCanTask);
     xTaskCreate(ble_notify_gps_task, "GPS_NTF", 3*1024, NULL, 2, (TaskHandle_t *)&xNotifyGPSTask);
 
     NRF_LOG_INFO("Bluetooth started.");
        
     nrf_sdh_freertos_init(advertising_start, &erase_bonds);
+    
     return NRF_SUCCESS;
 }

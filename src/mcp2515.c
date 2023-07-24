@@ -112,13 +112,14 @@ void mcp2515_send_msg(struct can_message_t *can_msg){
 
     if(can_msg->len > 8){
         NRF_LOG_INFO("CAN PACKET DLC > 8 bytes - %d",can_msg->len);
+        can_msg->len = 8;
     };
 
     //1 Check if TXREQ bit
     reg = mcp2515_read_reg(MCP2515_REG_TXB0CTRL);
 
     if(reg & MCP2515_TXBnCTRL_TXREQ){
-        NRF_LOG_INFO("Pending transmission");
+        //NRF_LOG_DEBUG("Pending transmission");
         return;
     }
 
