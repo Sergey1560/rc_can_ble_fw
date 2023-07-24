@@ -168,4 +168,6 @@ void mcp2515_send_msg(struct can_message_t *can_msg);
 void mcp2515_get_msg(uint8_t num, struct can_message_t *can_msg);
 void mcp2515_dump_status(void);
 
+void mcp2515_set_filter(uint8_t id, uint16_t filter, uint16_t mask);
+
 #endif

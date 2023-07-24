@@ -1,6 +1,8 @@
 #ifndef CAN_ABIT_H
 #define CAN_ABIT_H
 
+#ifdef CAN_ABIT
+
 #include <stdbool.h>
 #include <stdint.h>
 #include <string.h>
@@ -10,7 +12,6 @@
 #include "mcp2515.h"
 
 #define TO16B(X)    *((int16_t *)(&X))
-
 #define CAN_RC_ID   (uint16_t)0x281
 
 struct can_data_struct
@@ -41,5 +42,8 @@ struct can_data_struct
 
 void adlm_parse_msg(struct can_message_t *msg);
 void adlm_pack_data(uint8_t *data);
+
+#endif
+
 
 #endif

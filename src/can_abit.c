@@ -1,4 +1,5 @@
 #include "can_abit.h"
+#ifdef CAN_ABIT
 #include "abit_dtc.h"
 
 static struct can_data_struct can_data;
@@ -138,3 +139,5 @@ void adlm_pack_data(uint8_t *data){
         ptr[7] = (tmp >> 24) & 0xFF ;
 
 }
+
+#endif

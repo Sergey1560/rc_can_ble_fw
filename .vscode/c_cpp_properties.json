@@ -18,7 +18,8 @@
                 "ESB_PRESENT",
                 "FLOAT_ABI_HARD",
                 "NRF52840_XXAA",
-                "SOFTDEVICE_PRESENT"
+                "SOFTDEVICE_PRESENT",
+                "CAN_ODB"
             ],
             "cStandard": "c11",
             "cppStandard": "c++17",

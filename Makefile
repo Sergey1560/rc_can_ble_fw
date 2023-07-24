@@ -15,6 +15,7 @@ SRC_FILES += \
   $(PROJ_DIR)/src/mcp2515_hal.c \
   $(PROJ_DIR)src/mcp2515.c \
   $(PROJ_DIR)src/can_abit.c \
+  $(PROJ_DIR)src/can_odb.c \
   $(PROJ_DIR)/src/leds.c \
   $(PROJ_DIR)/src/uart.c \
   $(PROJ_DIR)/src/can.c \
@@ -280,6 +281,7 @@ CFLAGS += -DNRF52840_XXAA
 CFLAGS += -DNRF_SD_BLE_API_VERSION=7
 CFLAGS += -DS140
 CFLAGS += -DSOFTDEVICE_PRESENT
+CFLAGS += -DCAN_ODB
 CFLAGS += -mcpu=cortex-m4
 CFLAGS += -mthumb -mabi=aapcs
 CFLAGS += -Wall -Werror

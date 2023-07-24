@@ -1,6 +1,8 @@
 {
     "files.associations": {
         "ble_common.h": "c",
-        "timers.h": "c"
+        "timers.h": "c",
+        "can_abit.h": "c",
+        "can_odb.h": "c"
     }
 }

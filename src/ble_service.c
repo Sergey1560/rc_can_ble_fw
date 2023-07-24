@@ -14,6 +14,8 @@
 #include "queue.h"
 #include "semphr.h"
 
+#include "can.h"
+
 TimerHandle_t xTimers;
 
 volatile uint8_t __attribute__ ((aligned (4))) can_main_data[CAN_MAIN_UUID_LEN];
@@ -132,7 +134,7 @@ void ble_notify_can_task(void *p){
             control_notify_task(0);
         }else{
             if(notification_enabled.can_main){
-                adlm_pack_data((uint8_t *)can_data);
+                CAN_PACK_DATA((uint8_t *)can_data);
                 update_data((uint8_t *)can_data, CAN_MAIN_ID, CAN_MAIN_UUID_LEN);
             }
         }

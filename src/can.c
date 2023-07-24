@@ -20,6 +20,7 @@ static void int_pin_handler(nrf_drv_gpiote_pin_t pin, nrf_gpiote_polarity_t acti
 
 
 void can_task(void *p){
+    BaseType_t xResult;
     ret_code_t err_code;
     uint8_t data;
     struct can_message_t can_msg;
@@ -38,21 +39,29 @@ void can_task(void *p){
     mcp2515_init();
 
     while(1){
-        ulTaskNotifyTake(pdTRUE,pdMS_TO_TICKS(100));
+        xResult = xTaskNotifyWait(pdFALSE,     /* Не очищать биты на входе. */
+                                0xffffffff,        /* На выходе очищаются все биты. */
+                                NULL, /* Здесь хранится значение оповещения. */
+                                pdMS_TO_TICKS(100));  /* Время таймаута на блокировке. */
+
+        if(xResult != pdTRUE){
+            CAN_NOMSG;
+        }
+
         data = mcp2515_read_status();
         
         if(data & 3){
             if((data & 1)){
                 mcp2515_get_msg(0, &can_msg);
-                adlm_parse_msg(&can_msg);
-                //NRF_LOG_INFO("[%d]GET RX0 0x%0X",xTaskGetTickCount(),can_msg.id);
+                CAN_PARSE_MSG(&can_msg);
+                NRF_LOG_INFO("[%d]GET RX0 0x%0X",xTaskGetTickCount(),can_msg.id);
                 //NRF_LOG_HEXDUMP_INFO(can_msg.data,8);
             }
 
             if((data & (1<<1))){
                 mcp2515_get_msg(1, &can_msg);
-                adlm_parse_msg(&can_msg);
-                //NRF_LOG_INFO("[%d]GET RX1 0x%0X",xTaskGetTickCount(),can_msg.id);
+                CAN_PARSE_MSG(&can_msg);
+                NRF_LOG_INFO("[%d]GET RX1 0x%0X",xTaskGetTickCount(),can_msg.id);
                 //NRF_LOG_HEXDUMP_INFO(can_msg.data,8);
             }
         }

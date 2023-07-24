@@ -9,7 +9,6 @@
 
 #include "FreeRTOS.h"
 #include "timers.h"
-
 #include "ble_common.h"
 
 //f364adc9-b000-4042-ba50-05ca45bf8abc

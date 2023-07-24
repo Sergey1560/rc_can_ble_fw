@@ -37,12 +37,46 @@ int mcp2515_init(void){
 
     mcp2515_dump_status();
     
+    NRF_LOG_INFO("Enable filter");
+    mcp2515_set_filter(0, 0x7E8, 0x7FF);
+    mcp2515_set_filter(1, 0x7E8, 0x7FF);
+  
     NRF_LOG_INFO("Set normal mode");
     mcp2515_modify_reg(MCP2515_REG_CANCTRL,0xE0,0);
 
     mcp2515_dump_status();
 
+    
+
     return 0;
+}
+
+
+void mcp2515_set_filter(uint8_t id, uint16_t filter, uint16_t mask){
+    uint8_t rxm_l,rxm_h,rxf_l,rxf_h;
+    uint8_t tmp;
+
+    if(id == 0){
+        rxm_l = MCP2515_REG_RXM0SIDL;
+        rxm_h = MCP2515_REG_RXM0SIDH;
+        rxf_l = MCP2515_REG_RXF0SIDL;
+        rxf_h = MCP2515_REG_RXF0SIDH;
+    }else{
+        rxm_l = MCP2515_REG_RXM1SIDL;
+        rxm_h = MCP2515_REG_RXM1SIDH;
+        rxf_l = MCP2515_REG_RXF2SIDL;
+        rxf_h = MCP2515_REG_RXF2SIDH;
+    }
+
+    tmp = ((filter & 7) << 5);
+    mcp2515_write_reg(rxf_l,tmp);
+    tmp = (filter >> 3) & 0xFF;
+    mcp2515_write_reg(rxf_h,tmp);
+
+    tmp = ((mask & 7) << 5);
+    mcp2515_write_reg(rxm_l,tmp);
+    tmp = (mask >> 3) & 0xFF;
+    mcp2515_write_reg(rxm_h,tmp);
 }
 
 
