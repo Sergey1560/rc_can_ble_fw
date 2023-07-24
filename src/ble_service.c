@@ -34,6 +34,7 @@ void notify_set(uint8_t flag, enum CHAR_ID_t char_id){
     {
     case 1:
         notification_enabled.can_main = flag;
+        control_notify_task(flag);
         break;
 
     case 2:
@@ -47,6 +48,7 @@ void notify_set(uint8_t flag, enum CHAR_ID_t char_id){
     default:
         NRF_LOG_INFO("Default value, disable all");
         notification_enabled.can_main = 0;
+        control_notify_task(0);
         notification_enabled.gps_main = 0;
         notification_enabled.gps_time = 0;
         break;
@@ -113,28 +115,22 @@ void control_notify_task(uint8_t flag){
  
 
  void vTimerCallback( TimerHandle_t xTimer ){
-    if(xNotifyTask != NULL){
-        xTaskNotifyGive(xNotifyTask);
+    if(xNotifyCanTask != NULL){
+        xTaskNotifyGive(xNotifyCanTask);
     };
  }
 
-void ble_notify_task(void *p){
+void ble_notify_can_task(void *p){
 
     xTimers= xTimerCreate("Timer", NOTIFY_DATA_INTERVAL , pdTRUE, ( void * ) 0, vTimerCallback);
 
     while(1){
         xTaskNotifyWait(pdFALSE, 0xffffffff, NULL, portMAX_DELAY); 
 
-        if((notification_enabled.gps_main == 0) && (notification_enabled.gps_time == 0) && (notification_enabled.can_main == 0)){
-            NRF_LOG_INFO("Stop notify timer");
+        if((notification_enabled.can_main == 0)){
+            NRF_LOG_INFO("Stop can notify timer");
             control_notify_task(0);
         }else{
-            if(notification_enabled.gps_main){
-                ublox_pack_data((uint8_t *)gps_main_data,(uint8_t *)gps_time_data);
-                update_data((uint8_t *)gps_main_data,GPS_MAIN_ID, GPS_MAIN_UUID_LEN);
-            };
-
-
             if(notification_enabled.can_main){
                 adlm_pack_data((uint8_t *)can_data);
                 update_data((uint8_t *)can_data, CAN_MAIN_ID, CAN_MAIN_UUID_LEN);
@@ -142,6 +138,19 @@ void ble_notify_task(void *p){
         }
     }
 }
+
+void ble_notify_gps_task(void *p){
+    while(1){
+        xTaskNotifyWait(pdFALSE, 0xffffffff, NULL, portMAX_DELAY); 
+        rc_led_alive_invert();
+
+        if(notification_enabled.gps_main){
+            ublox_pack_data((uint8_t *)gps_main_data,(uint8_t *)gps_time_data);
+            update_data((uint8_t *)gps_main_data,GPS_MAIN_ID, GPS_MAIN_UUID_LEN);
+        };
+    }
+}
+
 
 /**@brief Function for handling the Connect event.
  *

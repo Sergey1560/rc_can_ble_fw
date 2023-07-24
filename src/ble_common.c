@@ -7,7 +7,8 @@ NRF_BLE_QWR_DEF(m_qwr);                                                         
 BLE_ADVERTISING_DEF(m_advertising);                                             /**< Advertising module instance. */
 BLE_CUS_DEF(rcdiy_service);
 
-TaskHandle_t xNotifyTask;
+TaskHandle_t xNotifyCanTask;
+TaskHandle_t xNotifyGPSTask;
 
 static uint16_t m_conn_handle = BLE_CONN_HANDLE_INVALID;                        /**< Handle of the current connection. */
 
@@ -58,7 +59,8 @@ uint32_t update_data(uint8_t *data, uint8_t char_id, uint32_t len){
     ret_code_t err_code = NRF_SUCCESS;
     uint32_t try_count = 100;
 
-    NRF_LOG_INFO("[%d] Send %d bytes",xTaskGetTickCount(),len);
+    //NRF_LOG_INFO("[%d] Send %d bytes",xTaskGetTickCount(),len);
+    
     do{
         err_code = ble_data_update(&rcdiy_service, char_id, data, len);
         if(err_code != NRF_SUCCESS){
@@ -244,8 +246,6 @@ static void on_cus_evt(ble_cus_t  *p_cus_service, ble_cus_evt_t * p_evt)
         case BLE_CUS_EVT_NOTIFICATION_ENABLED:
             NRF_LOG_INFO("Enable notify ID %d",char_id);
             notify_set(1,char_id);
-            control_notify_task(1);
-            
             break;
 
         case BLE_CUS_EVT_NOTIFICATION_DISABLED:
@@ -546,7 +546,8 @@ ret_code_t bluetooth_start(bool erase_bonds)
     conn_params_init();
     peer_manager_init();
 
-    xTaskCreate(ble_notify_task, "Can_NTF", 3*1024, NULL, 2, (TaskHandle_t *)&xNotifyTask);
+    xTaskCreate(ble_notify_can_task, "Can_NTF", 3*1024, NULL, 2, (TaskHandle_t *)&xNotifyCanTask);
+    xTaskCreate(ble_notify_gps_task, "GPS_NTF", 3*1024, NULL, 2, (TaskHandle_t *)&xNotifyGPSTask);
 
     NRF_LOG_INFO("Bluetooth started.");
        

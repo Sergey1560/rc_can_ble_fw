@@ -1,5 +1,5 @@
 #include "ublox.h"
-
+#include "ble_common.h"
 
 volatile struct ublox_gps_data_t ublox_data;
 volatile struct ubx_packet ALGN32 new_msg;
@@ -309,6 +309,7 @@ void ublox_parse_pvt(uint8_t *msg, uint8_t len){
 
 	ublox_data.gps_update_count++;
 
+	xTaskNotifyGive(xNotifyGPSTask);
 };
 
 

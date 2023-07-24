@@ -157,11 +157,11 @@ void vTaskGps(void *arg){
 
 
 	NRF_LOG_INFO("Setup new baudrate msg");
-	uart_send_data((uint8_t *)ubx_cfg_prt_ubx_only_19200,sizeof(ubx_cfg_prt_ubx_only_19200),1);
+	uart_send_data((uint8_t *)ubx_cfg_prt_ubx_only_38400,sizeof(ubx_cfg_prt_ubx_only_38400),1);
     vTaskDelay(100);
     
     NRF_LOG_INFO("Setup new baudrate cfg");
-    uart_config(UART_BAUDRATE_BAUDRATE_Baud19200);
+    uart_config(UART_BAUDRATE_BAUDRATE_Baud38400);
     
     vTaskDelay(100);
 
@@ -216,8 +216,8 @@ void vTaskGps(void *arg){
 	xQueueSend(GpsCmdQ_Handle,&cmd,portTICK_PERIOD_MS);
  
 	//Сообщение 10Hz
-	cmd.cmd=(uint8_t *)ubx_cfg_rate_10Hz;
-	cmd.size=sizeof(ubx_cfg_rate_10Hz);
+	cmd.cmd=(uint8_t *)ubx_cfg_rate_25Hz;
+	cmd.size=sizeof(ubx_cfg_rate_25Hz);
 	xQueueSend(GpsCmdQ_Handle,&cmd,portTICK_PERIOD_MS);
  
 	//Запрос номера версии

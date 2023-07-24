@@ -64,7 +64,8 @@
 #define DEAD_BEEF                       0xDEADBEEF                              /**< Value used as error code on stack dump, can be used to identify stack location on stack unwind. */
 
 
-extern TaskHandle_t xNotifyTask;
+extern TaskHandle_t xNotifyCanTask;
+extern TaskHandle_t xNotifyGPSTask;
 
 ret_code_t bluetooth_start(bool erase_bonds);
 ret_code_t ble_set_mtu(uint16_t mtu);
