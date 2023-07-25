@@ -54,14 +54,14 @@ void can_task(void *p){
             if((data & 1)){
                 mcp2515_get_msg(0, &can_msg);
                 CAN_PARSE_MSG(&can_msg);
-                NRF_LOG_INFO("[%d]GET RX0 0x%0X",xTaskGetTickCount(),can_msg.id);
+                //NRF_LOG_INFO("[%d]GET RX0 0x%0X",xTaskGetTickCount(),can_msg.id);
                 //NRF_LOG_HEXDUMP_INFO(can_msg.data,8);
             }
 
             if((data & (1<<1))){
                 mcp2515_get_msg(1, &can_msg);
                 CAN_PARSE_MSG(&can_msg);
-                NRF_LOG_INFO("[%d]GET RX1 0x%0X",xTaskGetTickCount(),can_msg.id);
+                //NRF_LOG_INFO("[%d]GET RX1 0x%0X",xTaskGetTickCount(),can_msg.id);
                 //NRF_LOG_HEXDUMP_INFO(can_msg.data,8);
             }
         }

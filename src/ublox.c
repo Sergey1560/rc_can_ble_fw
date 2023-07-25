@@ -51,7 +51,7 @@ void ublox_pack_data(uint8_t *main_data, uint8_t *time_data){
 	main_data[13] = (altitude) & 0xFF;
 
 	//14-15	Speed in ((km/h * 100) & 0x7FFF) or (((km/h * 10) & 0x7FFF) | 0x8000), invalid value 0xFFFF. ***
-	uint16_t speed = (ublox_data.nav_pvt.speed * 100) & 0x7FFF;
+ 	uint16_t speed = (ublox_data.nav_pvt.speed * 10) & 0x7FFF; //nav_pvt.speed x10, decimal place = 1
 	main_data[14] = (speed >> 8) & 0xFF;
 	main_data[15] = (speed ) & 0xFF;
 

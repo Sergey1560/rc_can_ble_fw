@@ -150,6 +150,8 @@ void ble_notify_gps_task(void *p){
             rc_led_alive_invert();
             ublox_pack_data((uint8_t *)gps_main_data,(uint8_t *)gps_time_data);
             update_data((uint8_t *)gps_main_data,GPS_MAIN_ID, GPS_MAIN_UUID_LEN);
+        }else{
+            rc_led_alive(0);
         };
     }
 }
