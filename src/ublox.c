@@ -28,6 +28,8 @@ void ublox_pack_data(uint8_t *main_data, uint8_t *time_data){
 	//Sync bits* (3 bits) and time from hour start (21 bits = (minute * 30000) + (seconds * 500) + (milliseconds / 2))
 	int timeSinceHourStart = (ublox_data.nav_pvt.minute * 30000) + (ublox_data.nav_pvt.second * 500) + (ublox_data.nav_pvt.nano/2000000);
 
+	//NRF_LOG_DEBUG("%d [Min: %d Sec: %d Nano: %d]",timeSinceHourStart,ublox_data.nav_pvt.minute,ublox_data.nav_pvt.second,(ublox_data.nav_pvt.nano/1000000));
+
  	main_data[0] = ((sync & 0x7) << 5) | ((timeSinceHourStart >> 16) & 0x1F);
     main_data[1] = (timeSinceHourStart >> 8) & 0xFF;
     main_data[2] = (timeSinceHourStart) & 0xFF;
@@ -69,8 +71,12 @@ void ublox_pack_data(uint8_t *main_data, uint8_t *time_data){
 
 void* ublox_select_func(uint16_t msg_id){
 	void (*ubx_parse) (uint8_t *msg, uint8_t len);
+	//static TickType_t last_value = 0;
+	//TickType_t new_value = xTaskGetTickCount();
 
-	//NRF_LOG_INFO("Select func for ID 0x%04X",msg_id);
+	//NRF_LOG_INFO("[%d] Select func for ID 0x%04X",new_value-last_value,msg_id);
+
+	//last_value = new_value;
 
 	switch (msg_id) {
 		case UBX_NAV_ODO: {

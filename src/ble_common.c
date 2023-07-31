@@ -59,8 +59,6 @@ uint32_t update_data(uint8_t *data, uint8_t char_id, uint32_t len){
     ret_code_t err_code = NRF_SUCCESS;
     uint32_t try_count = 100;
 
-    //NRF_LOG_INFO("[%d] Send %d bytes",xTaskGetTickCount(),len);
-    
     do{
         err_code = ble_data_update(&rcdiy_service, char_id, data, len);
         if(err_code != NRF_SUCCESS){
@@ -87,27 +85,6 @@ static void nrf_qwr_error_handler(uint32_t nrf_error)
 {
     APP_ERROR_HANDLER(nrf_error);
 }
-
-
-/**@brief Function for putting the chip into sleep mode.
- *
- * @note This function will not return.
- */
-// static void sleep_mode_enter(void)
-// {
-//     ret_code_t err_code;
-
-//     // err_code = bsp_indication_set(BSP_INDICATE_IDLE);
-//     // APP_ERROR_CHECK(err_code);
-
-//     // // Prepare wakeup buttons.
-//     // err_code = bsp_btn_ble_sleep_mode_prepare();
-//     // APP_ERROR_CHECK(err_code);
-
-//     // Go to system-off mode (this function will not return; wakeup will cause a reset).
-//     err_code = sd_power_system_off();
-//     APP_ERROR_CHECK(err_code);
-// }
 
 
 /**@brief Function for handling advertising events.
@@ -218,8 +195,6 @@ static void ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
 static void on_cus_evt(ble_cus_t  *p_cus_service, ble_cus_evt_t * p_evt)
 {
     uint8_t char_id;
-
-//    NRF_LOG_INFO("Service: %d CAN: %d F: %d GPS: %d Time: %d",p_evt->char_handle,p_cus_service->can_main_handles.value_handle,p_cus_service->can_filter_handles.value_handle,p_cus_service->gps_main_handles.value_handle,p_cus_service->gps_time_handles.value_handle);
 
     char_id = handle_to_id(p_cus_service,p_evt);
 
