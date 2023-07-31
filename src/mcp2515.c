@@ -105,13 +105,13 @@ void mcp2515_dump_status(void){
     NRF_LOG_INFO("[RX STATUS] RECV: %d Msg: %d Filter: %d", ((data & 0xC0) >> 6), ((data & 0x18) >> 3), (data & 0x7) );
 };
 
-
-void mcp2515_send_msg(struct can_message_t *can_msg){
+int mcp2515_send_msg(struct can_message_t *can_msg){
     uint8_t reg;
     uint16_t id = can_msg->id & CAN_STDID_MASK;
+    uint8_t __attribute__ ((aligned (4))) out_buf[MCP2515_FASTTX_LEN];
 
     if(can_msg->len > 8){
-        NRF_LOG_INFO("CAN PACKET DLC > 8 bytes - %d",can_msg->len);
+        NRF_LOG_ERROR("CAN PACKET DLC > 8 bytes - %d",can_msg->len);
         can_msg->len = 8;
     };
 
@@ -119,34 +119,35 @@ void mcp2515_send_msg(struct can_message_t *can_msg){
     reg = mcp2515_read_reg(MCP2515_REG_TXB0CTRL);
 
     if(reg & MCP2515_TXBnCTRL_TXREQ){
-        //NRF_LOG_DEBUG("Pending transmission");
-        return;
+        NRF_LOG_DEBUG("Pending transmission");
+        return -1;
     }
 
     //2 Clear: ABTF (TXBnCTRL[6]) MLOA (TXBnCTRL[5]) TXERR (TXBnCTRL[4])
-    reg &= ~(MCP2515_TXBnCTRL_ABTF|MCP2515_TXBnCTRL_MLOA|MCP2515_TXBnCTRL_TXERR);
-    mcp2515_write_reg(MCP2515_REG_TXB0CTRL,reg);
-
-    //Write ID
-    reg = ((id & 7) << 5);
-    mcp2515_write_reg(MCP2515_REG_TXB0SIDL,reg);
-
-    reg = (id >> 3) & 0xFF;
-    mcp2515_write_reg(MCP2515_REG_TXB0SIDH,reg);
-
-    //Write DLC
-    reg = can_msg->len; 
-    mcp2515_write_reg(MCP2515_REG_TXB0DLC,reg);
-
-    //Write data bytes
-    for(uint32_t i=0; i<can_msg->len; i++){
-        mcp2515_write_reg(MCP2515_REG_TXB0DATA+(uint8_t)i,can_msg->data[i]);
+    if(reg & (MCP2515_TXBnCTRL_ABTF|MCP2515_TXBnCTRL_MLOA|MCP2515_TXBnCTRL_TXERR)){
+        NRF_LOG_DEBUG("Reset error bit");
+        reg &= ~(MCP2515_TXBnCTRL_ABTF|MCP2515_TXBnCTRL_MLOA|MCP2515_TXBnCTRL_TXERR);
+        mcp2515_write_reg(MCP2515_REG_TXB0CTRL,reg);
     }
+
+    out_buf[0] = MCP2515_INSTR_LOAD_TX0;
+    out_buf[1] = (id >> 3) & 0xFF;          //SIDH
+    out_buf[2] = ((id & 7) << 5);           //SIDL
+    out_buf[3] = 0;                         //EID8
+    out_buf[4] = 0;                         //EID0
+    out_buf[5] = can_msg->len;              //DLC
+
+    for(uint8_t i=0; i<can_msg->len; i++){
+        out_buf[6+i] = can_msg->data[i];    //Data
+    };
+
+    spi_transfer(out_buf, NULL, (6+can_msg->len));
 
     //Start trans on selected TX buff
     mcp2515_start_tx(0);
-};
 
+    return 0;
+}
 
 void mcp2515_get_msg(uint8_t num, struct can_message_t *can_msg){
     uint8_t __attribute__ ((aligned (4))) out_buf[MCP2515_FASTRX_LEN];
@@ -218,7 +219,7 @@ static uint8_t mcp2515_modify_reg(uint8_t reg, uint8_t mask, uint8_t data){
 static uint8_t mcp2515_start_tx(uint8_t num){
     if(num > 2){
         NRF_LOG_INFO("TX buffer index error. %d > 2",num);
-        return 0;
+        return 1;
     }
 
     tx_buffer[0] = MCP2515_INSTR_RTS_TX0|(1 << num);

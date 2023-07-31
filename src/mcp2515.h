@@ -146,6 +146,7 @@ clock
 
 
 #define MCP2515_FASTRX_LEN              14 //dymmy byte + 4 byte ID + dlc + 8 data
+#define MCP2515_FASTTX_LEN              14 //instr + 4 byte ID + dlc + 8 data
 
 struct can_message_t {
     uint16_t    id;
@@ -164,7 +165,7 @@ struct rx_buff_addr_t {
 int mcp2515_init(void);
 void mcp2515_reset(void);
 uint8_t mcp2515_read_status(void);
-void mcp2515_send_msg(struct can_message_t *can_msg);
+int mcp2515_send_msg(struct can_message_t *can_msg);
 void mcp2515_get_msg(uint8_t num, struct can_message_t *can_msg);
 void mcp2515_dump_status(void);
 
