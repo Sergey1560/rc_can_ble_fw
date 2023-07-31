@@ -9,8 +9,8 @@ volatile TaskHandle_t xGpsTask;
 volatile TaskHandle_t xGpsParse;
 volatile QueueHandle_t GpsCmdQ_Handle;
 
-const uint32_t uart_speed_list[]={UART_BAUDRATE_BAUDRATE_Baud9600,UART_BAUDRATE_BAUDRATE_Baud19200,UART_BAUDRATE_BAUDRATE_Baud38400};
-const uint32_t uart_speed_val[]={9600,19200,38400};
+const uint32_t uart_speed_list[]={UART_BAUDRATE_BAUDRATE_Baud9600,UART_BAUDRATE_BAUDRATE_Baud19200,UART_BAUDRATE_BAUDRATE_Baud38400,UART_BAUDRATE_BAUDRATE_Baud57600};
+const uint32_t uart_speed_val[]={9600,19200,38400,57600};
 
 static nrf_drv_uart_t m_uart = NRF_DRV_UART_INSTANCE(0);
 uint8_t __attribute__ ((aligned (4))) uart_tx_data[2048];
