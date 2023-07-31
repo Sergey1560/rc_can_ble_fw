@@ -1,7 +1,6 @@
 #ifndef BLE_CUSTOM_SERVICE_H
 #define BLE_CUSTOM_SERVICE_H
 
-/* This code belongs in ble_cus.h*/
 #include <stdint.h>
 #include <stdbool.h>
 #include "ble.h"
@@ -11,12 +10,6 @@
 #include "timers.h"
 #include "ble_common.h"
 
-//f364adc9-b000-4042-ba50-05ca45bf8abc
-//00001ff8-0000-1000-8000-00805f9b34fb
-
-//#define CUSTOM_SERVICE_UUID_BASE         {0xBC, 0x8A, 0xBF, 0x45, 0xCA, 0x05, 0x50, 0xBA, 0x40, 0x42, 0xB0, 0x00, 0xC9, 0xAD, 0x64, 0xF3}
-
-//RaceChrono UUID 00 00 1f f8-00 00-10 00-80 00-00 80 5f 9b 34 fb 
 #define RCDIY_SERVICE_UUID_BASE         {0xfb, 0x34, 0x9b, 0x5f, 0x80, 0x00, 0x00, 0x80, 0x00, 0x10, 0x00, 0x00, 0xf8, 0x1f, 0x00, 0x00}
 #define RCDIY_SERVICE_UUID              0x1ff8
 

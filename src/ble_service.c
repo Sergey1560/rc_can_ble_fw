@@ -3,7 +3,6 @@
 #include "ble_srv_common.h"
 #include <string.h>
 #include "nrf_gpio.h"
-//#include "boards.h"
 #include "nrf_log.h"
 #include "mcp2515.h"
 #include "can_abit.h"
@@ -164,21 +163,13 @@ void ble_notify_gps_task(void *p){
  */
 static void on_connect(ble_cus_t * p_cus, ble_evt_t const * p_ble_evt)
 {
-    //uint32_t err_code;
     p_cus->conn_handle = p_ble_evt->evt.gap_evt.conn_handle;
-
     ble_cus_evt_t evt;
 
     evt.evt_type = BLE_CUS_EVT_CONNECTED;
     evt.char_handle = 0; 
 
-    // err_code = ble_set_mtu(23);
-    // APP_ERROR_CHECK(err_code);
-
-    // NRF_LOG_INFO("MTU: %d",ble_get_mtu(p_cus->conn_handle));
-
     ublox_pack_data((uint8_t *)gps_main_data,(uint8_t *)gps_time_data);
-
     p_cus->evt_handler(p_cus, &evt);
 }
 
@@ -186,8 +177,6 @@ static void on_par_update(ble_cus_t * p_cus, ble_evt_t const * p_ble_evt)
 {
     ret_code_t              err_code;
     ble_gap_conn_params_t   gap_conn_params;
-
-    //NRF_LOG_INFO("Update param:\n Connection timeout: %d Max interval: %d Min interval %d Slave latancy: %d",p_ble_evt->evt.gap_evt.params.conn_param_update.conn_params.conn_sup_timeout,p_ble_evt->evt.gap_evt.params.conn_param_update.conn_params.max_conn_interval,p_ble_evt->evt.gap_evt.params.conn_param_update.conn_params.min_conn_interval,p_ble_evt->evt.gap_evt.params.conn_param_update.conn_params.slave_latency);
 
     gap_conn_params.min_conn_interval = p_ble_evt->evt.gap_evt.params.conn_param_update.conn_params.min_conn_interval;
     gap_conn_params.max_conn_interval = p_ble_evt->evt.gap_evt.params.conn_param_update.conn_params.max_conn_interval;
@@ -201,13 +190,12 @@ static void on_par_update(ble_cus_t * p_cus, ble_evt_t const * p_ble_evt)
 
 static void on_data_len_upd(ble_cus_t * p_cus, ble_evt_t const * p_ble_evt)
 {
-    // NRF_LOG_INFO("->Update DLC:\n Max RX: %d Max RX us: %d Max TX %d Max tx us: %d",p_ble_evt->evt.gap_evt.params.data_length_update.effective_params.max_rx_octets,p_ble_evt->evt.gap_evt.params.data_length_update.effective_params.max_rx_time_us,p_ble_evt->evt.gap_evt.params.data_length_update.effective_params.max_tx_octets,p_ble_evt->evt.gap_evt.params.data_length_update.effective_params.max_tx_time_us);
-    // NRF_LOG_INFO("->Update DLC REQ:\n Max RX: %d Max RX us: %d Max TX %d Max tx us: %d",p_ble_evt->evt.gap_evt.params.data_length_update_request.peer_params.max_rx_octets,p_ble_evt->evt.gap_evt.params.data_length_update_request.peer_params.max_rx_time_us,p_ble_evt->evt.gap_evt.params.data_length_update_request.peer_params.max_tx_octets, p_ble_evt->evt.gap_evt.params.data_length_update_request.peer_params.max_tx_time_us);
+
 }
 
 static void on_data_len_upd_req(ble_cus_t * p_cus, ble_evt_t const * p_ble_evt)
 {
-    //NRF_LOG_INFO("Update DLC REQ:\n Max RX: %d Max RX us: %d Max TX %d Max tx us: %d",p_ble_evt->evt.gap_evt.params.data_length_update_request.peer_params.max_rx_octets,p_ble_evt->evt.gap_evt.params.data_length_update_request.peer_params.max_rx_time_us,p_ble_evt->evt.gap_evt.params.data_length_update_request.peer_params.max_tx_octets, p_ble_evt->evt.gap_evt.params.data_length_update_request.peer_params.max_tx_time_us);
+
 }
 
 
@@ -230,16 +218,9 @@ static void on_disconnect(ble_cus_t * p_cus, ble_evt_t const * p_ble_evt)
 static void on_write(ble_cus_t * p_cus, ble_evt_t const * p_ble_evt)
 {
     ble_gatts_evt_write_t * p_evt_write = (ble_gatts_evt_write_t *)&p_ble_evt->evt.gatts_evt.params.write;
-//    NRF_LOG_INFO("On write. PEW_H: %d",p_evt_write->handle);
-
-    // Check if the handle passed with the event matches the Custom Value Characteristic handle.
-    // if (p_evt_write->handle == p_cus->can_filter_handles.value_handle){
-    //     NRF_LOG_INFO("FILTER Write event. Len: %d Data0: %d",p_evt_write->len,p_evt_write->data[0]);
-    // }
 
     // Check if the Custom value CCCD is written to and that the value is the appropriate length, i.e 2 bytes.
     if ((p_evt_write->handle == p_cus->can_main_handles.cccd_handle) && (p_evt_write->len == 2)){
-//        NRF_LOG_INFO("MAIN Write event.");
         if (p_cus->evt_handler != NULL){
             ble_cus_evt_t evt;
 
@@ -254,7 +235,6 @@ static void on_write(ble_cus_t * p_cus, ble_evt_t const * p_ble_evt)
     }
 
     if ((p_evt_write->handle == p_cus->gps_main_handles.cccd_handle) && (p_evt_write->len == 2)){
-        //NRF_LOG_INFO("GPS main Write event.");
         if (p_cus->evt_handler != NULL){
             ble_cus_evt_t evt;
 
@@ -269,7 +249,6 @@ static void on_write(ble_cus_t * p_cus, ble_evt_t const * p_ble_evt)
     }
 
     if ((p_evt_write->handle == p_cus->gps_time_handles.cccd_handle) && (p_evt_write->len == 2)){
-        //NRF_LOG_INFO("GPS time Write event.");
         if (p_cus->evt_handler != NULL){
             ble_cus_evt_t evt;
 
