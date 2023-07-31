@@ -2,17 +2,22 @@
 #ifdef CAN_ODB
 static struct can_data_struct can_data;
 
-const struct can_message_t canreq_rpm     = {OBD_REQ,8,{0x02,0x01,ENGINE_RPM,00,00,00,00,00} };
-const struct can_message_t canreq_coolant = {OBD_REQ,8,{0x02,0x01,ENGINE_COOLANT_TEMP,00,00,00,00,00} };
-const struct can_message_t canreq_speed   = {OBD_REQ,8,{0x02,0x01,SPEED,00,00,00,00,00} };
-const struct can_message_t canreq_drossel = {OBD_REQ,8,{0x03,0x22,DROS,0xd4,00,00,00,00} };
+const struct can_message_t canreq_rpm     = {OBD_REQ,3,{0x02,0x01,ENGINE_RPM,00,00,00,00,00} };
+const struct can_message_t canreq_coolant = {OBD_REQ,3,{0x02,0x01,ENGINE_COOLANT_TEMP,00,00,00,00,00} };
+const struct can_message_t canreq_speed   = {OBD_REQ,3,{0x02,0x01,SPEED,00,00,00,00,00} };
+const struct can_message_t canreq_drossel = {OBD_REQ,4,{0x03,0x22,DROS,0xd4,00,00,00,00} };
+
 const struct can_message_t* can_msg[]= {&canreq_rpm,&canreq_coolant,&canreq_speed,&canreq_drossel};
 #define MAX_MSG_INDEX ((sizeof(can_msg)/sizeof(can_msg[0])) - 1)
 
 
 void odb_send_next(void){
 	static uint8_t can_queque_index=0;
-	if(can_queque_index > MAX_MSG_INDEX) can_queque_index=0;
+
+	if(can_queque_index > MAX_MSG_INDEX) {
+		can_queque_index=0;
+	}
+	
 	mcp2515_send_msg((struct can_message_t*)can_msg[can_queque_index]);
 	can_queque_index++; 
 };
