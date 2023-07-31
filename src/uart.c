@@ -86,13 +86,12 @@ void vTaskGpsParse(void *arg){
         calc_crc = ublox_crc((struct ubx_packet*)&new_msg);
 
         if(crc ==  calc_crc){  
-            //NRF_LOG_INFO("Pkt %04X",new_msg.msgid);
             ubx_parse = ublox_select_func(new_msg.msgid);
             if(ubx_parse != NULL){
                 ubx_parse((uint8_t *)new_msg.payload,new_msg.size);
             }
         }else{
-            //NRF_LOG_ERROR("Calc FAIL ID: %04X Len: %d CRC: %0X Packet CRC: %0X",new_msg.msgid,new_msg.size,calc_crc,crc);
+            NRF_LOG_ERROR("Calc FAIL ID: %04X Len: %d CRC: %0X Packet CRC: %0X",new_msg.msgid,new_msg.size,calc_crc,crc);
         }
     }
 }
@@ -103,7 +102,6 @@ static void uart_send_data(uint8_t *data, uint32_t len, uint8_t wait){
         uart_tx_data[i] = data[i];
     };
     
-    //NRF_LOG_INFO("Send pkt %04X",(data[2] << 8)|data[3]);
     nrf_drv_uart_tx(&m_uart, (uint8_t *)uart_tx_data,len);
 
     if(wait){
