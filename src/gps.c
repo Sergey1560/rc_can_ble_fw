@@ -173,7 +173,7 @@ void vTaskGps(void *arg){
 
 void gps_init(void){
 
-    xTaskCreate(vTaskGps, "GPS", 10*1024, NULL, 2, (TaskHandle_t *)&xGpsTask);
+    xTaskCreate(vTaskGps, "GPS", 1024, NULL, 2, (TaskHandle_t *)&xGpsTask);
     xTaskCreate(vTaskGpsParse, "GPP", 1024, NULL, 2, (TaskHandle_t *)&xGpsParse);
 
 };
