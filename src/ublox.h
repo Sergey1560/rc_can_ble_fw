@@ -1,7 +1,8 @@
 #ifndef UBLOX_H
 #define UBLOX_H
 #include <string.h>
-#include "uart.h"
+#include <stdbool.h>
+#include <stdint.h>
 
 #define GMT_TIME  3
 #define UBX_MSG_MAX_LEN		2048

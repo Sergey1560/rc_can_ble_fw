@@ -1,4 +1,6 @@
-#include "uart.h"
+#ifdef UART_LEGACY
+
+#include "uart_legacy.h"
 #include "app_uart.h"
 #include "app_error.h"
 #include "nrf_delay.h"
@@ -115,3 +117,4 @@ void uart_config(uint32_t speed){
 }
 
 
+#endif
