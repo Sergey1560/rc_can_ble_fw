@@ -2,9 +2,13 @@ PROJECT_NAME     := ble_app
 TARGETS          := firmware
 OUTPUT_DIRECTORY := build
 
+UART_LEGACY := 1
+UART_LIBUARTE := 0
+CAN_ODB := 1
+CAN_ABIT := 0
+
 CONFIG_FLAGS := \
--DCAN_ODB \
--DUART_LEGACY
+-DCAN_ODB
 
 SDK_ROOT := /home/sergey/soft/SDK/nrf52
 PROJ_DIR := ./
@@ -22,6 +26,7 @@ SRC_FILES += \
   $(PROJ_DIR)src/can_odb.c \
   $(PROJ_DIR)/src/leds.c \
   $(PROJ_DIR)/src/uart_legacy.c \
+  $(PROJ_DIR)/src/uart_libuarte.c \
   $(PROJ_DIR)/src/gps.c \
   $(PROJ_DIR)/src/can.c \
   $(PROJ_DIR)/src/ublox.c
@@ -46,9 +51,29 @@ SRC_FILES += \
   $(SDK_ROOT)/components/softdevice/common/nrf_sdh_soc.c
 
 #uart
+
+ifeq ($(UART_LEGACY),1)
+$(info  UART: Legacy )
 SRC_FILES += \
   $(SDK_ROOT)/components/libraries/fifo/app_fifo.c \
   $(SDK_ROOT)/components/libraries/uart/app_uart_fifo.c
+
+CONFIG_FLAGS += -DUART_LEGACY
+endif  
+
+ifeq ($(UART_LIBUARTE),1)
+  $(info  UART: LIBUARTE )
+  SRC_FILES += \
+  $(SDK_ROOT)/components/libraries/libuarte/nrf_libuarte_async.c \
+  $(SDK_ROOT)/components/libraries/libuarte/nrf_libuarte_drv.c \
+  $(SDK_ROOT)/modules/nrfx/drivers/src/nrfx_ppi.c \
+  $(SDK_ROOT)/modules/nrfx/drivers/src/nrfx_rtc.c \
+  $(SDK_ROOT)/modules/nrfx/drivers/src/nrfx_timer.c \
+  $(SDK_ROOT)/components/libraries/queue/nrf_queue.c
+
+CONFIG_FLAGS += -DUART_LIBUARTE
+endif
+
 
 #freertos
 SRC_FILES += \
@@ -93,6 +118,12 @@ SRC_FILES += \
 
 # Source files common to all targets
 SRC_FILES += \
+  $(SDK_ROOT)/components/libraries/libuarte/nrf_libuarte_async.c \
+  $(SDK_ROOT)/components/libraries/libuarte/nrf_libuarte_drv.c \
+  $(SDK_ROOT)/modules/nrfx/drivers/src/nrfx_ppi.c \
+  $(SDK_ROOT)/modules/nrfx/drivers/src/nrfx_rtc.c \
+  $(SDK_ROOT)/modules/nrfx/drivers/src/nrfx_timer.c \
+  $(SDK_ROOT)/components/libraries/queue/nrf_queue.c \
   $(SDK_ROOT)/components/libraries/util/app_error.c \
   $(SDK_ROOT)/components/libraries/util/app_error_handler_gcc.c \
   $(SDK_ROOT)/components/libraries/util/app_error_weak.c \
@@ -125,15 +156,20 @@ SRC_FILES += \
   $(SDK_ROOT)/modules/nrfx/drivers/src/nrfx_uart.c \
   $(SDK_ROOT)/modules/nrfx/drivers/src/nrfx_spi.c \
   $(SDK_ROOT)/modules/nrfx/drivers/src/nrfx_spim.c \
+  $(SDK_ROOT)/modules/nrfx/drivers/src/nrfx_ppi.c \
+  $(SDK_ROOT)/modules/nrfx/drivers/src/nrfx_rtc.c \
+  $(SDK_ROOT)/modules/nrfx/drivers/src/nrfx_timer.c \
   $(SDK_ROOT)/external/utf_converter/utf.c \
   $(SDK_ROOT)/external/fprintf/nrf_fprintf.c \
   $(SDK_ROOT)/external/fprintf/nrf_fprintf_format.c \
-
+  $(SDK_ROOT)/components/softdevice/common/nrf_sdh.c \
+  $(SDK_ROOT)/components/softdevice/common/nrf_sdh_soc.c
 
 # Include folders common to all targets
 INC_FOLDERS += \
   $(PROJ_DIR)/config \
   $(SDK_ROOT)/components/libraries/uart \
+  $(SDK_ROOT)/components/libraries/libuarte \
   $(SDK_ROOT)/components/libraries/fifo \
   $(SDK_ROOT)/components/libraries/pwm \
   $(SDK_ROOT)/components/libraries/usbd/class/cdc/acm \
@@ -155,6 +191,7 @@ INC_FOLDERS += \
   $(SDK_ROOT)/components/libraries/slip \
   $(SDK_ROOT)/components/libraries/delay \
   $(SDK_ROOT)/components/libraries/uart \
+  $(SDK_ROOT)/components/libraries/libuarte \
   $(SDK_ROOT)/components/libraries/csense_drv \
   $(SDK_ROOT)/components/libraries/memobj \
   $(SDK_ROOT)/components/libraries/usbd/class/hid/mouse \
@@ -200,9 +237,9 @@ INC_FOLDERS += \
   $(SDK_ROOT)/components/softdevice/s140/headers \
   $(SDK_ROOT)/components/softdevice/common \
   $(SDK_ROOT)/modules/nrfx/hal \
+  $(SDK_ROOT)/modules/nrfx/drivers/include \
   $(SDK_ROOT)/components/boards \
   $(SDK_ROOT)/external/utf_converter \
-  $(SDK_ROOT)/modules/nrfx/drivers/include \
   $(SDK_ROOT)/external/freertos/portable/GCC/nrf52 \
   $(SDK_ROOT)/components/toolchain/cmsis/include \
   $(SDK_ROOT)/components/nfc/ndef/conn_hand_parser/ble_oob_advdata_parser \

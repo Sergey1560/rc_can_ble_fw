@@ -11,9 +11,14 @@
 
 #define USE_NATIVE_UART
 
-void uart_config(uint32_t speed);
+void uart_init(uint32_t speed, uint32_t timeout);
 void uart_send_data(uint8_t *data, uint32_t len, uint8_t wait);
 //void uart_init(void);
+
+
+static const uint32_t uart_speed_list[]={UART_BAUDRATE_BAUDRATE_Baud9600,UART_BAUDRATE_BAUDRATE_Baud19200,UART_BAUDRATE_BAUDRATE_Baud38400,UART_BAUDRATE_BAUDRATE_Baud57600};
+static const uint32_t uart_speed_val[]={9600,19200,38400,57600};
+
 
 #endif
 

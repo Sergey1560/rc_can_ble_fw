@@ -19,7 +19,9 @@
                 "FLOAT_ABI_HARD",
                 "NRF52840_XXAA",
                 "SOFTDEVICE_PRESENT",
-                "CAN_ODB"
+                "CAN_ODB",
+                "UART_LIBUARTE",
+                "UART_LEGACY",
             ],
             "cStandard": "c11",
             "cppStandard": "c++17",

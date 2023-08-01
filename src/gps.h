@@ -11,6 +11,10 @@
 #include "uart_legacy.h"
 #endif
 
+#ifdef UART_LIBUARTE
+#include "uart_libuarte.h"
+#endif
+
 
 extern volatile TaskHandle_t xGpsParse;
 extern volatile TaskHandle_t xGpsTask;

@@ -4,8 +4,6 @@ volatile TaskHandle_t xGpsTask;
 volatile TaskHandle_t xGpsParse;
 volatile QueueHandle_t GpsCmdQ_Handle;
 
-const uint32_t uart_speed_list[]={UART_BAUDRATE_BAUDRATE_Baud9600,UART_BAUDRATE_BAUDRATE_Baud19200,UART_BAUDRATE_BAUDRATE_Baud38400,UART_BAUDRATE_BAUDRATE_Baud57600};
-const uint32_t uart_speed_val[]={9600,19200,38400,57600};
 
 
 void vTaskGpsParse(void *arg){
@@ -45,7 +43,7 @@ void vTaskGps(void *arg){
         for(uint32_t i=0; i<(sizeof(uart_speed_list)/sizeof(uart_speed_list[0])); i++){
             NRF_LOG_INFO("Trying GPS at %d",uart_speed_val[i]);
             
-            uart_config(uart_speed_list[i]);
+            uart_init(uart_speed_list[i],1000);
             vTaskDelay(50);
 
             uart_send_data((uint8_t *)ubx_cfg_prt_poll,sizeof(ubx_cfg_prt_poll),1);
@@ -79,7 +77,7 @@ void vTaskGps(void *arg){
     vTaskDelay(100);
     
     NRF_LOG_INFO("Setup new baudrate cfg");
-    uart_config(UART_BAUDRATE_BAUDRATE_Baud38400);
+    uart_init(UART_BAUDRATE_BAUDRATE_Baud38400,1000);
     
     vTaskDelay(100);
 
@@ -175,7 +173,7 @@ void vTaskGps(void *arg){
 
 void gps_init(void){
 
-    xTaskCreate(vTaskGps, "GPS", 1024, NULL, 2, (TaskHandle_t *)&xGpsTask);
+    xTaskCreate(vTaskGps, "GPS", 10*1024, NULL, 2, (TaskHandle_t *)&xGpsTask);
     xTaskCreate(vTaskGpsParse, "GPP", 1024, NULL, 2, (TaskHandle_t *)&xGpsParse);
 
 };

@@ -84,7 +84,7 @@ void uart_send_data(uint8_t *data, uint32_t len, uint8_t wait){
 
 
 
-void uart_config(uint32_t speed){
+void uart_init(uint32_t speed, uint32_t timeout){
     uint32_t err_code;
     uint8_t uart_data;
 
