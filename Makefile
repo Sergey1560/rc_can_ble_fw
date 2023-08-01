@@ -2,8 +2,8 @@ PROJECT_NAME     := ble_app
 TARGETS          := firmware
 OUTPUT_DIRECTORY := build
 
-UART_LEGACY := 1
-UART_LIBUARTE := 0
+UART_LEGACY := 0
+UART_LIBUARTE := 1
 CAN_ODB := 1
 CAN_ABIT := 0
 

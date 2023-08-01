@@ -127,6 +127,8 @@ void ublox_input(uint8_t Data){
 	static uint16_t ubx_msg_start=0;
 	static uint16_t payload_size=0;
 	
+	NRF_LOG_INFO("Data: %c",Data);
+
 	if((Data == 0xB5) && (ubx_msg_start == 0)) {
 		ubx_msg_start=1;
 	}else if((Data == 0x62) && (ubx_msg_start == 1)){
@@ -156,7 +158,7 @@ void ublox_input(uint8_t Data){
 				new_msg.payload[i] = ubx_msg[i+4];
 			}
 
-			NRF_LOG_DEBUG("Get msgid 0x%04X size %d",new_msg.msgid,new_msg.size);
+			NRF_LOG_INFO("Get msgid 0x%04X size %d",new_msg.msgid,new_msg.size);
 			ubx_msg_index=0;
 			ubx_msg_start=0;
 
