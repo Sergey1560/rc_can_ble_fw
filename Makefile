@@ -18,6 +18,7 @@ SRC_FILES += \
   $(PROJ_DIR)src/can_odb.c \
   $(PROJ_DIR)/src/leds.c \
   $(PROJ_DIR)/src/uart.c \
+  $(PROJ_DIR)/src/gps.c \
   $(PROJ_DIR)/src/can.c \
   $(PROJ_DIR)/src/ublox.c
 

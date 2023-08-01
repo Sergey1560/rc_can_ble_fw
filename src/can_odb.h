@@ -4,6 +4,7 @@
 #ifdef CAN_ODB
 
 #include "mcp2515.h"
+#include "can.h"
 
 #define OBD_REQ             (uint16_t)0x7DF
 #define OBD_ANS             (uint16_t)0x7E8

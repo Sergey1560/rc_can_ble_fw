@@ -125,7 +125,7 @@ int mcp2515_send_msg(struct can_message_t *can_msg){
 
     //2 Clear: ABTF (TXBnCTRL[6]) MLOA (TXBnCTRL[5]) TXERR (TXBnCTRL[4])
     if(reg & (MCP2515_TXBnCTRL_ABTF|MCP2515_TXBnCTRL_MLOA|MCP2515_TXBnCTRL_TXERR)){
-        NRF_LOG_DEBUG("Reset error bit");
+        NRF_LOG_DEBUG("Reset error bit %d",(reg & (MCP2515_TXBnCTRL_ABTF|MCP2515_TXBnCTRL_MLOA|MCP2515_TXBnCTRL_TXERR)));
         reg &= ~(MCP2515_TXBnCTRL_ABTF|MCP2515_TXBnCTRL_MLOA|MCP2515_TXBnCTRL_TXERR);
         mcp2515_write_reg(MCP2515_REG_TXB0CTRL,reg);
     }

@@ -19,5 +19,6 @@
 
 
 void can_init(void);
+void can_send_data(void);
 
 #endif

@@ -6,7 +6,7 @@
 
 #include "ble_common.h"
 #include "leds.h"
-#include "uart.h"
+#include "gps.h"
 #include "can.h"
 
 #include "FreeRTOS.h"
@@ -56,7 +56,7 @@ int main(void)
     }
 
     power_management_init();
-    uart_init();
+    gps_init();
     can_init();
     bluetooth_start(0);
 

@@ -6,19 +6,12 @@
 #include "nrf_gpio.h"
 #include "nrf_drv_uart.h"
 
-#include "FreeRTOS.h"
-#include "task.h"
-#include "queue.h"
-#include "semphr.h"
-
 #include "ublox.h"
 
-//#define USE_APP_UART
 #define USE_NATIVE_UART
 
-extern volatile TaskHandle_t xGpsParse;
-extern volatile TaskHandle_t xGpsTask;
-
-void uart_init(void);
+void uart_config(uint32_t speed);
+void uart_send_data(uint8_t *data, uint32_t len, uint8_t wait);
+//void uart_init(void);
 
 #endif

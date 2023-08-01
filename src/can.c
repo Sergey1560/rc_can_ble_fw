@@ -6,6 +6,8 @@
 #include "semphr.h"
 #include "nrf_drv_gpiote.h"
 
+#include "ble_common.h"
+
 #include "pins_config.h"
 
 volatile TaskHandle_t xCanTask;
@@ -67,6 +69,11 @@ void can_task(void *p){
         }
     }
 }
+
+void can_send_data(void){
+    //xTaskNotifyGive(xNotifyCanTask);
+}
+
 
 void can_init(void){
 

@@ -1,5 +1,10 @@
 #include "ublox.h"
 #include "ble_common.h"
+#include "gps.h"
+
+#undef 	NRF_LOG_LEVEL
+#define NRF_LOG_LEVEL   4
+
 
 volatile struct ublox_gps_data_t ublox_data;
 volatile struct ubx_packet ALGN32 new_msg;
@@ -122,27 +127,20 @@ void ublox_input(uint8_t Data){
 	static uint16_t ubx_msg_start=0;
 	static uint16_t payload_size=0;
 	
-	//NRF_LOG_INFO("Char: %0X",Data);
-
 	if((Data == 0xB5) && (ubx_msg_start == 0)) {
 		ubx_msg_start=1;
-		//NRF_LOG_INFO("Start pkt 1");
 	}else if((Data == 0x62) && (ubx_msg_start == 1)){
 			ubx_msg_start=2;
 			ubx_msg_index=0;
 			payload_size=(UBX_MSG_MAX_LEN-1);
-			//NRF_LOG_INFO("Start pkt 2");
 	}else if(ubx_msg_start == 1){
 		ubx_msg_start=0;
-		//NRF_LOG_INFO("Fail pkt by 2 byte");
 	}else if(ubx_msg_start >=2){
 		if(ubx_msg_index < (payload_size+5)){ 
-			//NRF_LOG_INFO("Add byte to buff %d",ubx_msg_index);
 			ubx_msg[ubx_msg_index]=(uint8_t)Data;
 
 			if(ubx_msg_index == 3) {
 				payload_size = (ubx_msg[ubx_msg_index] << 8) | ubx_msg[ubx_msg_index-1];
-				//NRF_LOG_INFO("Calc paylod = %d",payload_size );
 				if((payload_size+6) > UBX_MSG_MAX_LEN){
 					ubx_msg_start=0;
 				};
@@ -150,7 +148,6 @@ void ublox_input(uint8_t Data){
 			ubx_msg_start++;
 			ubx_msg_index++;
 		}else{
-			//NRF_LOG_INFO("Pkt complete %0X",Data);
 			ubx_msg[ubx_msg_index]=(uint8_t)Data;
 			new_msg.msgid = (ubx_msg[0] << 8) | ubx_msg[1];
 			new_msg.size = payload_size;
@@ -159,7 +156,7 @@ void ublox_input(uint8_t Data){
 				new_msg.payload[i] = ubx_msg[i+4];
 			}
 
-//			NRF_LOG_INFO("Get msgid 0x%04X size %d",new_msg.msgid,new_msg.size);
+			NRF_LOG_DEBUG("Get msgid 0x%04X size %d",new_msg.msgid,new_msg.size);
 			ubx_msg_index=0;
 			ubx_msg_start=0;
 
@@ -169,7 +166,7 @@ void ublox_input(uint8_t Data){
 
 		};
 	}else{
-		//NRF_LOG_INFO("Byte not in order 0x%0X",Data);
+		NRF_LOG_DEBUG("Byte not in order 0x%0X",Data);
 	};
 }
 

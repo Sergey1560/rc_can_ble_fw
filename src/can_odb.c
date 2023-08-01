@@ -2,10 +2,10 @@
 #ifdef CAN_ODB
 static struct can_data_struct can_data;
 
-const struct can_message_t canreq_rpm     = {OBD_REQ,3,{0x02,0x01,ENGINE_RPM,00,00,00,00,00} };
-const struct can_message_t canreq_coolant = {OBD_REQ,3,{0x02,0x01,ENGINE_COOLANT_TEMP,00,00,00,00,00} };
-const struct can_message_t canreq_speed   = {OBD_REQ,3,{0x02,0x01,SPEED,00,00,00,00,00} };
-const struct can_message_t canreq_drossel = {OBD_REQ,4,{0x03,0x22,DROS,0xd4,00,00,00,00} };
+const struct can_message_t canreq_rpm     = {OBD_REQ,8,{0x02,0x01,ENGINE_RPM,00,00,00,00,00} };
+const struct can_message_t canreq_coolant = {OBD_REQ,8,{0x02,0x01,ENGINE_COOLANT_TEMP,00,00,00,00,00} };
+const struct can_message_t canreq_speed   = {OBD_REQ,8,{0x02,0x01,SPEED,00,00,00,00,00} };
+const struct can_message_t canreq_drossel = {OBD_REQ,8,{0x03,0x22,DROS,0xd4,00,00,00,00} };
 
 const struct can_message_t* can_msg[]= {&canreq_rpm,&canreq_coolant,&canreq_speed,&canreq_drossel};
 #define MAX_MSG_INDEX ((sizeof(can_msg)/sizeof(can_msg[0])) - 1)
@@ -29,15 +29,19 @@ void odb_parse_msg(struct can_message_t *msg){
 					switch (msg->data[2]){
 						case ENGINE_RPM:
 										can_data.rpm=(((uint16_t)msg->data[3] << 8)+msg->data[4])/4;
+										can_send_data();
 										break;
 						case ENGINE_COOLANT_TEMP:
 										can_data.coolant_temp=msg->data[3]-40;
+										can_send_data();
 										break;
 						case SPEED:
 										can_data.speed=msg->data[3];
+										can_send_data();
 										break;
 						case DROS:
 										can_data.dros=msg->data[4]/2;
+										can_send_data();
 										break;
 						default :
 										break;  
