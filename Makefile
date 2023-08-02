@@ -8,7 +8,7 @@ CAN_ODB := 1
 CAN_ABIT := 0
 
 CONFIG_FLAGS := \
--DCAN_ODB
+-DCAN_ABIT
 
 SDK_ROOT := /home/sergey/soft/SDK/nrf52
 PROJ_DIR := ./

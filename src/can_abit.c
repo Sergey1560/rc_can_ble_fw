@@ -1,6 +1,7 @@
 #include "can_abit.h"
 #ifdef CAN_ABIT
 #include "abit_dtc.h"
+#include "can.h"
 
 static struct can_data_struct can_data;
 
@@ -11,19 +12,24 @@ void adlm_parse_msg(struct can_message_t *msg){
     switch (msg->id){
         case 0x281:
                 can_data.rpm = (uint16_t)TO16B(msg->data[0]);
+                can_data.iqr_call_rate++;
+                can_send_data();
                 break;  
 
         case 0x283:
                 can_data.dros = (uint8_t)(TO16B(msg->data[0]) / 10);
+                can_send_data();
                 break;  
                 
         case 0x284:
                 can_data.acc_x = TO16B(msg->data[0]);
                 can_data.acc_y = TO16B(msg->data[2]);
+                can_send_data();
                 break;  
 
         case 0x381:
                 can_data.lamda = (uint16_t)TO16B(msg->data[0]);
+                can_send_data();
                 break;  
 
         case 0x382:
@@ -34,6 +40,7 @@ void adlm_parse_msg(struct can_message_t *msg){
                 }else if((msg->data[4] == 0) && (dtc_present == 1)){
                         dtc_present = 0;
                 }
+                can_send_data();
                 break;
 
 
@@ -49,25 +56,31 @@ void adlm_parse_msg(struct can_message_t *msg){
                 i=TO16B(msg->data[4]);
                 if(i < 0 ) i=0;
                 can_data.brake_press = i;
+
+                can_send_data();
                 break;
 
         case 0x581: 
                 can_data.oil_temp = TO16B(msg->data[4]);
+                can_send_data();
                 break;
 
 
         case 0x582: 
                 can_data.u_batt = TO16B(msg->data[6]);
+                can_send_data();
                 break;
 
         case 0x583: 
                 can_data.coolant_temp = msg->data[0]-40;
                 can_data.intake_air_temp = msg->data[1]-40;
+                can_send_data();
                 break;
 
         case 0x584:
                 can_data.logger_enabled = msg->data[0] & 1;
                 can_data.check_engine = ((msg->data[0] & 4) > 0) ? 1 : 0;
+                can_send_data();
                 break;
 
         case 0x781:
@@ -139,5 +152,15 @@ void adlm_pack_data(uint8_t *data){
         ptr[7] = (tmp >> 24) & 0xFF ;
 
 }
+
+
+void adlm_update_stat(void){
+	can_data.iqr_call_rate = can_data.iqr_call_count;
+	can_data.iqr_call_count = 0;
+
+	can_data.iqr_overall_call_rate = can_data.iqr_overall_call_count;
+	can_data.iqr_overall_call_count = 0;
+}
+
 
 #endif
