@@ -79,8 +79,10 @@ void can_task(void *p){
 }
 
 void can_send_data(void){
-    if(xNotifyCanTask != NULL){
-        xTaskNotifyGive(xNotifyCanTask);
+    if(CAN_NOTIFY_BY_TIMER == 0){
+        if(xNotifyCanTask != NULL){
+            xTaskNotifyGive(xNotifyCanTask);
+        }
     }
 }
 

@@ -141,6 +141,7 @@ void ble_notify_can_task(void *p){
         }else{
             if(notification_enabled.can_main){
                 CAN_PACK_DATA((uint8_t *)can_data);
+                NRF_LOG_INFO("Upd CAN");
                 update_data((uint8_t *)can_data, CAN_MAIN_ID, CAN_MAIN_UUID_LEN);
             }
         }
