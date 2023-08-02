@@ -7,6 +7,7 @@
 #define CAN_NOMSG       	 odb_send_next()
 #define CAN_PARSE_MSG(x)     odb_parse_msg(x)
 #define CAN_PACK_DATA(x)     odb_pack_data(x)
+#define CAN_UPD_STAT()       odb_update_stat()
 #endif
 
 #ifdef CAN_ABIT
@@ -14,6 +15,7 @@
 #define CAN_NOMSG       	    
 #define CAN_PARSE_MSG(x)      adlm_parse_msg(x)
 #define CAN_PACK_DATA(x)      adlm_pack_data(x)
+#define CAN_UPD_STAT()        adlm_update_stat()
 #endif
 
 

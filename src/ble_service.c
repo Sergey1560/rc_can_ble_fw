@@ -107,17 +107,13 @@ int8_t handle_to_id(ble_cus_t * p_cus, ble_cus_evt_t *evt){
 }
 
 void control_notify_task(uint8_t flag){
-
-    if(flag){
-        if(xTimers != NULL){
+    if(xTimers != NULL){
+        if(flag){
             xTimerStart(xTimers, 0 );
-        }
-    }else{
-        if(xTimers != NULL){
+        }else{
             xTimerStop(xTimers, 0 );
         }
     }
-
 }
  
 
@@ -130,7 +126,11 @@ void control_notify_task(uint8_t flag){
 void ble_notify_can_task(void *p){
     NRF_LOG_DEBUG("CAN notify task started");
 
-    xTimers= xTimerCreate("Timer", NOTIFY_DATA_INTERVAL , pdTRUE, ( void * ) 0, vTimerCallback);
+    if(CAN_NOTIFY_BY_TIMER == 1){
+        xTimers= xTimerCreate("Timer", NOTIFY_DATA_INTERVAL , pdTRUE, ( void * ) 0, vTimerCallback);
+    }else{
+        xTimers=NULL;
+    }
 
     while(1){
         xTaskNotifyWait(pdFALSE, 0xffffffff, NULL, portMAX_DELAY); 

@@ -425,3 +425,9 @@ void  ublox_parse_ack(uint8_t *msg, uint8_t len){
 	//xEventGroupSetBits(xGpsEventGroup,ubx_ack);
 	xTaskNotifyFromISR(xGpsTask, ubx_ack, eSetBits, NULL);
 };
+
+
+void ublox_update_stat(void){
+	ublox_data.gps_update_rate = ublox_data.gps_update_count;
+	ublox_data.gps_update_count = 0;
+}

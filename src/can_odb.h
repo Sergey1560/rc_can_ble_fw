@@ -37,6 +37,7 @@ struct can_data_struct
 void odb_send_next(void);
 void odb_parse_msg(struct can_message_t *msg);
 void odb_pack_data(uint8_t *data);
+void odb_update_stat(void);
 
 #endif
 

@@ -64,14 +64,14 @@ void can_task(void *p){
             if((data & 1)){
                 mcp2515_get_msg(0, &can_msg);
                 CAN_PARSE_MSG(&can_msg);
-                //NRF_LOG_INFO("[%d]GET RX0 0x%0X",xTaskGetTickCount(),can_msg.id);
+                NRF_LOG_DEBUG("[%d]GET RX0 0x%0X",xTaskGetTickCount(),can_msg.id);
                 //NRF_LOG_HEXDUMP_INFO(can_msg.data,8);
             }
 
             if((data & (1<<1))){
                 mcp2515_get_msg(1, &can_msg);
                 CAN_PARSE_MSG(&can_msg);
-                //NRF_LOG_INFO("[%d]GET RX1 0x%0X",xTaskGetTickCount(),can_msg.id);
+                NRF_LOG_DEBUG("[%d]GET RX1 0x%0X",xTaskGetTickCount(),can_msg.id);
                 //NRF_LOG_HEXDUMP_INFO(can_msg.data,8);
             }
         }
@@ -79,8 +79,11 @@ void can_task(void *p){
 }
 
 void can_send_data(void){
-    //xTaskNotifyGive(xNotifyCanTask);
+    if(xNotifyCanTask != NULL){
+        xTaskNotifyGive(xNotifyCanTask);
+    }
 }
+
 
 
 void can_init(void){

@@ -25,6 +25,7 @@
 #define GPS_TIME_UUID                   0x0004
 #define GPS_TIME_UUID_LEN               3 
 
+#define CAN_NOTIFY_BY_TIMER             1
 #define NOTIFY_DATA_INTERVAL            pdMS_TO_TICKS(40)
 
 

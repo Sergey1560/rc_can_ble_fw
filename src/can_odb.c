@@ -95,4 +95,13 @@ void odb_pack_data(uint8_t *data){
         ptr[7] = 0;
 }
 
+
+void odb_update_stat(void){
+	can_data.iqr_call_rate = can_data.iqr_call_count;
+	can_data.iqr_call_count = 0;
+
+	can_data.iqr_overall_call_rate = can_data.iqr_overall_call_count;
+	can_data.iqr_overall_call_count = 0;
+}
+
 #endif

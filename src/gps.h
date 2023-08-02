@@ -7,6 +7,8 @@
 #include "semphr.h"
 
 #include "ublox.h"
+#define GPS_UPDATE_STAT()   ublox_update_stat()
+
 #ifdef UART_LEGACY
 #include "uart_legacy.h"
 #endif

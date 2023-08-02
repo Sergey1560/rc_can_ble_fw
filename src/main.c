@@ -31,6 +31,18 @@ static void power_management_init(void)
     APP_ERROR_CHECK(err_code);
 }
 
+
+void stat_task(void *p){
+
+    while(1){
+        vTaskDelay(pdMS_TO_TICKS(1000));
+        CAN_UPD_STAT();
+        GPS_UPDATE_STAT();
+    }
+
+}
+
+
 int main(void)
 {
     ret_code_t err_code;
@@ -64,6 +76,8 @@ int main(void)
     gps_init();
     can_init();
     bluetooth_start(0);
+
+    xTaskCreate(stat_task, "1s", 1024, NULL, 2, NULL);
 
     vTaskStartScheduler();
 
