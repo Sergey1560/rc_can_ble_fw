@@ -7,8 +7,13 @@
 #include "nrf_drv_gpiote.h"
 
 #include "ble_common.h"
-
 #include "pins_config.h"
+
+
+#define NRF_LOG_MODULE_NAME CAN
+#define NRF_LOG_LEVEL   4
+#include "nrf_log.h"
+NRF_LOG_MODULE_REGISTER();
 
 volatile TaskHandle_t xCanTask;
 
@@ -27,6 +32,8 @@ void can_task(void *p){
     uint8_t data;
     struct can_message_t can_msg;
 
+    NRF_LOG_INFO("Start CAN task");
+    
     err_code = nrf_drv_gpiote_init();
     APP_ERROR_CHECK(err_code);
 
@@ -47,6 +54,7 @@ void can_task(void *p){
                                 pdMS_TO_TICKS(100));  /* Время таймаута на блокировке. */
 
         if(xResult != pdTRUE){
+            NRF_LOG_DEBUG("CAN Reply timout");
             CAN_NOMSG;
         }
 
@@ -76,6 +84,6 @@ void can_send_data(void){
 
 
 void can_init(void){
-
+    
     xTaskCreate(can_task, "Can", 1024, NULL, 2, (TaskHandle_t *)&xCanTask);
 };

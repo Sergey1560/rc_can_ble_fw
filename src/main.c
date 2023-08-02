@@ -4,6 +4,11 @@
 #include "nrf_drv_common.h"
 #include "nrf_drv_clock.h"
 
+#define NRF_LOG_MODULE_NAME MAIN
+#define NRF_LOG_LEVEL   4
+#include "nrf_log.h"
+NRF_LOG_MODULE_REGISTER();
+
 #include "ble_common.h"
 #include "leds.h"
 #include "gps.h"

@@ -2,9 +2,10 @@
 #include "ble_common.h"
 #include "gps.h"
 
-#undef 	NRF_LOG_LEVEL
+#define NRF_LOG_MODULE_NAME UBX
 #define NRF_LOG_LEVEL   4
-
+#include "nrf_log.h"
+NRF_LOG_MODULE_REGISTER();
 
 volatile struct ublox_gps_data_t ublox_data;
 volatile struct ubx_packet ALGN32 new_msg;
@@ -127,7 +128,7 @@ void ublox_input(uint8_t Data){
 	static uint16_t ubx_msg_start=0;
 	static uint16_t payload_size=0;
 	
-	NRF_LOG_INFO("Data: %c",Data);
+	//NRF_LOG_INFO("Data: %c",Data);
 
 	if((Data == 0xB5) && (ubx_msg_start == 0)) {
 		ubx_msg_start=1;
@@ -158,7 +159,7 @@ void ublox_input(uint8_t Data){
 				new_msg.payload[i] = ubx_msg[i+4];
 			}
 
-			NRF_LOG_INFO("Get msgid 0x%04X size %d",new_msg.msgid,new_msg.size);
+			//NRF_LOG_DEBUG("Get msgid 0x%04X size %d",new_msg.msgid,new_msg.size);
 			ubx_msg_index=0;
 			ubx_msg_start=0;
 

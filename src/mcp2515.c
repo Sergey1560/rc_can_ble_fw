@@ -1,9 +1,12 @@
 #include "mcp2515.h"
 #include "pins_config.h"
-
 #include "FreeRTOS.h"
 #include "task.h"
 
+#define NRF_LOG_MODULE_NAME CAN_DRV
+#define NRF_LOG_LEVEL   4
+#include "nrf_log.h"
+NRF_LOG_MODULE_REGISTER();
 
 static uint8_t mcp2515_read_reg(uint8_t reg);
 static uint8_t mcp2515_write_reg(uint8_t reg, uint8_t data);

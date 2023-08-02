@@ -2,6 +2,11 @@
 #include "FreeRTOS.h"
 #include "nrf_sdh_freertos.h"
 
+#define NRF_LOG_MODULE_NAME BLE
+#define NRF_LOG_LEVEL   4
+#include "nrf_log.h"
+NRF_LOG_MODULE_REGISTER();
+
 NRF_BLE_GATT_DEF(m_gatt);                                                       /**< GATT module instance. */
 NRF_BLE_QWR_DEF(m_qwr);                                                         /**< Context for the Queued Write module.*/
 BLE_ADVERTISING_DEF(m_advertising);                                             /**< Advertising module instance. */

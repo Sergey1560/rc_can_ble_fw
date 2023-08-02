@@ -3,7 +3,7 @@
 #include "ble_srv_common.h"
 #include <string.h>
 #include "nrf_gpio.h"
-#include "nrf_log.h"
+
 #include "mcp2515.h"
 #include "can_abit.h"
 #include "ublox.h"
@@ -14,6 +14,12 @@
 #include "semphr.h"
 
 #include "can.h"
+
+#define NRF_LOG_MODULE_NAME BLE_S
+#define NRF_LOG_LEVEL   4
+#include "nrf_log.h"
+NRF_LOG_MODULE_REGISTER();
+
 
 TimerHandle_t xTimers;
 

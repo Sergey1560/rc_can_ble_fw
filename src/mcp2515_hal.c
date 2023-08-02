@@ -2,6 +2,15 @@
 #include "FreeRTOS.h"
 #include "task.h"
 
+
+#define NRF_LOG_MODULE_NAME CAN_HAL
+#define NRF_LOG_LEVEL   4
+#include "nrf_log.h"
+NRF_LOG_MODULE_REGISTER();
+// #include "nrf_log_ctrl.h"
+// #include "nrf_log_default_backends.h"
+
+
 #include "pins_config.h"
 
 static const nrf_drv_spi_t spi = NRF_DRV_SPI_INSTANCE(SPI_INSTANCE);  /**< SPI instance. */

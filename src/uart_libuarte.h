@@ -4,7 +4,6 @@
 #define UART_LIBUARTE_H
 
 #include "nrf.h"
-#include "nrf_log.h"
 #include "nrf_drv_common.h"
 #include "nrf_gpio.h"
 #include "nrf_libuarte_async.h"

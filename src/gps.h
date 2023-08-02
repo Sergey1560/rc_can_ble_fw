@@ -19,6 +19,7 @@
 extern volatile TaskHandle_t xGpsParse;
 extern volatile TaskHandle_t xGpsTask;
 
+extern volatile uint8_t uart_br_found;
 
 void gps_init(void);
 
