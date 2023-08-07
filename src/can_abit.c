@@ -3,6 +3,12 @@
 #include "abit_dtc.h"
 #include "can.h"
 
+#define NRF_LOG_MODULE_NAME CAN_ABT
+#define NRF_LOG_LEVEL   4
+#include "nrf_log.h"
+NRF_LOG_MODULE_REGISTER();
+
+
 static struct can_data_struct can_data;
 
 void adlm_parse_msg(struct can_message_t *msg){
@@ -109,7 +115,7 @@ void adlm_parse_msg(struct can_message_t *msg){
 24  coolant     08b     0 - 255
 32  lamda       08b      0 - 255   0
 40  ce          01b                8
-41  intake      08b     0 - 255    9
+41  brake       08b     0 - 255    9
 49  oil press   06b     0 - 127    16
 55  fuel press  06b     0 - 127    23
 61  gear        03b     0 - 7
@@ -141,7 +147,7 @@ void adlm_pack_data(uint8_t *data){
         tmp |= (1 << (40 - 32));
         }
 
-        tmp |= ((can_data.intake_air_temp+40) & 0xFF) << (41 -32);
+        tmp |= ((can_data.brake_press/10) & 0xFF) << (41 -32);
         tmp |= ((can_data.oil_press/10) & 0x3F) << (49 - 32);
         tmp |= ((can_data.fuel_press/10) & 0x3F) << (55 - 32);
         tmp |= ((can_data.gear_num) & 0x7) << (61 - 32);

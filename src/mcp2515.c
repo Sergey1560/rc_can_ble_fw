@@ -3,6 +3,8 @@
 #include "FreeRTOS.h"
 #include "task.h"
 
+#include "can.h"
+
 #define NRF_LOG_MODULE_NAME CAN_DRV
 #define NRF_LOG_LEVEL   4
 #include "nrf_log.h"
@@ -40,10 +42,12 @@ int mcp2515_init(void){
 
     mcp2515_dump_status();
     
-    NRF_LOG_INFO("Enable filter");
+    #if CAN_ENABLE_FILTERS == 1
+    NRF_LOG_INFO("Enable CAN filter");
     mcp2515_set_filter(0, 0x7E8, 0x7FF);
     mcp2515_set_filter(1, 0x7E8, 0x7FF);
-  
+    #endif
+
     NRF_LOG_INFO("Set normal mode");
     mcp2515_modify_reg(MCP2515_REG_CANCTRL,0xE0,0);
 

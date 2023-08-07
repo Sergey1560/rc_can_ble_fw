@@ -12,7 +12,8 @@
 
 #ifdef CAN_ABIT
 #include "can_abit.h"
-#define CAN_NOMSG       	    
+#define CAN_NOMSG       	  
+#define CAN_ENABLE_FILTERS    0  
 #define CAN_PARSE_MSG(x)      adlm_parse_msg(x)
 #define CAN_PACK_DATA(x)      adlm_pack_data(x)
 #define CAN_UPD_STAT()        adlm_update_stat()
