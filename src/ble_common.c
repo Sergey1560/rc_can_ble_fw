@@ -67,7 +67,7 @@ uint32_t update_data(uint8_t *data, uint8_t char_id, uint32_t len){
     do{
         err_code = ble_data_update(&rcdiy_service, char_id, data, len);
         if(err_code != NRF_SUCCESS){
-            vTaskDelay(10);
+            vTaskDelay(pdMS_TO_TICKS(10));
         }
     }while((err_code == NRF_ERROR_RESOURCES) && (try_count-- > 0));
 

@@ -43,14 +43,14 @@ void vTaskGps(void *arg){
 
 	/* Очередь команд к GPS приемнику */
 	GpsCmdQ_Handle = xQueueCreate( 30, sizeof(struct ubx_cmd));
-    vTaskDelay(1000); //Задержка, для включения модуля GPS
+    vTaskDelay(pdMS_TO_TICKS(1000)); //Задержка, для включения модуля GPS
 
     while(!uart_br_found){
         for(uint32_t i=0; i<(sizeof(uart_speed_list)/sizeof(uart_speed_list[0])); i++){
             NRF_LOG_INFO("Trying GPS at %d",uart_speed_val[i]);
             
             uart_init(uart_speed_list[i],1000);
-            vTaskDelay(50);
+            vTaskDelay(pdMS_TO_TICKS(50));
 
             uart_send_data((uint8_t *)ubx_cfg_prt_poll,sizeof(ubx_cfg_prt_poll),1);
 
@@ -74,18 +74,18 @@ void vTaskGps(void *arg){
             }
             
         }
-        vTaskDelay(2000);
+        vTaskDelay(pdMS_TO_TICKS(2000));
     }
 
 
 	NRF_LOG_INFO("Setup new baudrate msg");
 	uart_send_data((uint8_t *)ubx_cfg_prt_ubx_only_115200,sizeof(ubx_cfg_prt_ubx_only_115200),1);
-    vTaskDelay(100);
+    vTaskDelay(pdMS_TO_TICKS(100));
     
     NRF_LOG_INFO("Setup new baudrate cfg");
     uart_init(NRF_UARTE_BAUDRATE_115200,1000);
     
-    vTaskDelay(100);
+    vTaskDelay(pdMS_TO_TICKS(100));
 
     //Clean all notifycations
     while(xTaskNotifyWait(pdFALSE, 0xffffffff, &ulNotifiedValue, pdMS_TO_TICKS(0)) == pdTRUE){__NOP();}

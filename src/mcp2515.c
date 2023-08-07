@@ -90,9 +90,9 @@ void mcp2515_set_filter(uint8_t id, uint16_t filter, uint16_t mask){
 void mcp2515_reset(void){
     
     nrf_gpio_pin_write(MCP_RST_PIN, 0);
-    vTaskDelay(100);
+    vTaskDelay(pdMS_TO_TICKS(100));
     nrf_gpio_pin_write(MCP_RST_PIN, 1);
-    vTaskDelay(100);
+    vTaskDelay(pdMS_TO_TICKS(100));
 
     *tx_buffer = MCP2515_INSTR_RESET;
     spi_transfer((uint8_t *)tx_buffer, (uint8_t *)rx_buffer,1);

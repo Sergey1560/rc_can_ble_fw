@@ -44,7 +44,7 @@ ret_code_t uart_send_data(uint8_t *data, uint32_t len, uint8_t wait){
         err_code = nrf_libuarte_async_tx(&libuarte, data_ptr, len);
         if(err_code == NRF_ERROR_BUSY){
             NRF_LOG_INFO("TX Busy");
-            vTaskDelay(100);
+            vTaskDelay(pdMS_TO_TICKS(100));
         }
     }while(err_code == NRF_ERROR_BUSY);
 

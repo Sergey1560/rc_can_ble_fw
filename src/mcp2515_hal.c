@@ -43,6 +43,6 @@ int8_t spi_transfer(uint8_t *tx_data, uint8_t *rx_data, uint32_t len){
 
 void delay_ms(uint32_t ms){
 	
-	vTaskDelay(ms);
+	vTaskDelay(pdMS_TO_TICKS(ms));
 }
 

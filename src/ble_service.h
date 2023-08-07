@@ -26,7 +26,7 @@
 #define GPS_TIME_UUID_LEN               3 
 
 #define CAN_NOTIFY_BY_TIMER             1
-#define NOTIFY_DATA_INTERVAL            pdMS_TO_TICKS(40)
+#define NOTIFY_DATA_INTERVAL            pdMS_TO_TICKS(50)
 
 
 struct notification_enabled_t{
