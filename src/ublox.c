@@ -77,12 +77,6 @@ void ublox_pack_data(uint8_t *main_data, uint8_t *time_data){
 
 void* ublox_select_func(uint16_t msg_id){
 	void (*ubx_parse) (uint8_t *msg, uint8_t len);
-	//static TickType_t last_value = 0;
-	//TickType_t new_value = xTaskGetTickCount();
-
-	//NRF_LOG_INFO("[%d] Select func for ID 0x%04X",new_value-last_value,msg_id);
-
-	//last_value = new_value;
 
 	switch (msg_id) {
 		case UBX_NAV_ODO: {
@@ -106,7 +100,6 @@ void* ublox_select_func(uint16_t msg_id){
 			break;
 		};
 		case UBX_ACK_ACK: {
-			//NRF_LOG_INFO("Ack packet");
 			ubx_parse=ublox_parse_ack;
 			break;
 		};
@@ -128,8 +121,6 @@ void ublox_input(uint8_t Data){
 	static uint16_t ubx_msg_start=0;
 	static uint16_t payload_size=0;
 	
-	//NRF_LOG_INFO("Data: %c",Data);
-
 	if((Data == 0xB5) && (ubx_msg_start == 0)) {
 		ubx_msg_start=1;
 	}else if((Data == 0x62) && (ubx_msg_start == 1)){
@@ -198,7 +189,6 @@ void ublox_parse_navsat(uint8_t *msg, uint8_t len){
 	
 	for(uint8_t i=0; i<ublox_data.nav_sat.numSvs; i++){
 			gnssId = msg[8+12*i];
-			//svId = msg[9+12*i];
 			flags = (msg[19] << 24) | (msg[18] << 16) | (msg[17+12*i] << 8) | msg[16+12*i];
 			
 		  valid = flags & (1<<3);
@@ -377,7 +367,6 @@ uint16_t  ublox_crc(struct ubx_packet* pkt){
 	ckb+=cka;
 
 	for(uint32_t i=0; i<(pkt->size); i++){
-		//NRF_LOG_INFO("CRC %0X",pkt->payload[i]);
 		cka+=pkt->payload[i];
 		ckb+=cka;
 		crc=(uint16_t)(cka << 8)|(ckb);
@@ -410,7 +399,6 @@ void  ublox_parse_monver(uint8_t *msg, uint8_t len){
 		}
 	}
 
-	//xEventGroupSetBits(xGpsEventGroup,UBX_MON_VER);
 	xTaskNotifyFromISR(xGpsTask, UBX_MON_VER, eSetBits, NULL);
 };
 
@@ -421,8 +409,6 @@ void  ublox_parse_ack(uint8_t *msg, uint8_t len){
 	(void)ubx_ack;
 
 	//NRF_LOG_INFO("Get ASK 0x%04X",ubx_ack);
-
-	//xEventGroupSetBits(xGpsEventGroup,ubx_ack);
 	xTaskNotifyFromISR(xGpsTask, ubx_ack, eSetBits, NULL);
 };
 
